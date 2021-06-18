@@ -418,7 +418,7 @@ sub checkCLNSIG {
     my $clnsig = shift;
     return 0 if( $clnsig eq "" );
     my @cs = split(/\||,/, $clnsig );
-    @cs = map map_CLNSIG_newformat @cs;
+    @cs = map { map_CLNSIG_newformat } @cs;
     my $flag255 = 0;
     my $flagno = 0;
     my $flagyes = 0;
