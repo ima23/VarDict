@@ -4,8 +4,13 @@ use Getopt::Std;
 use warnings;
 use strict;
 
+if (@ARGV < 1) {
+  print STDERR "Usage: vcf2txt.pl [-H] [-F var_fraction] [-n sample_cnt] [-f freq] [-p pos] [-q quality] [...] vcf_files\n";
+  exit 1;
+}
+
 our ($opt_F, $opt_R, $opt_s, $opt_r, $opt_n, $opt_N, $opt_H, $opt_q, $opt_p, $opt_b, $opt_f, $opt_c, $opt_u, $opt_D, $opt_Q, $opt_P, $opt_M, $opt_o, $opt_V, $opt_C, $opt_G, $opt_A, $opt_g, $opt_a, $opt_L);
-getopts('suHabgLR:F:f:n:r:p:q:c:D:P:Q:M:o:V:C:G:A:') || USAGE();
+getopts('suHabgLR:F:f:n:r:p:q:c:D:P:Q:M:o:V:C:G:A:') ;
 
 my %AA_code = (
     "ALA" => "A",  "ILE" => "I",  "LEU" => "L",  "VAL" => "V",
@@ -545,11 +550,13 @@ sub extractFORMATdata {
 }
 
 sub USAGE {
-print <<USAGE;
+print <<END;
+
+USAGE
     The program will convert an annotated vcf files by snfEFF using dbSNP and COSMIC back to txt format.  It also checks for quality
     and add "PASS" column.  It will not perform any filtering.
 
-    Usage: $0 [-H] [-F var_fraction] [-n sample_cnt] [-f freq] [-p pos] [-q quality] vcf_files
+    Usage: $0 [-H] [-F var_fraction] [-n sample_cnt] [-f freq] [-p pos] [-q quality] [...] vcf_files
 
     The program accepts more than one vcf files.
 
@@ -639,6 +646,6 @@ REPORTING BUGS
 COPYRIGHT
      This is free software: you are free to change and redistribute it.  There is NO WARRANTY, to the extent permitted by law.
 
-USAGE
+END
     exit(0);
 }
