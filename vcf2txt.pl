@@ -10,7 +10,7 @@ if (@ARGV < 1) {
 }
 
 our ($opt_F, $opt_R, $opt_s, $opt_r, $opt_n, $opt_N, $opt_H, $opt_q, $opt_p, $opt_b, $opt_f, $opt_c, $opt_u, $opt_D, $opt_Q, $opt_P, $opt_M, $opt_o, $opt_V, $opt_C, $opt_G, $opt_A, $opt_g, $opt_a, $opt_L);
-getopts('suHabgLR:F:f:n:r:p:q:c:D:P:Q:M:o:V:C:G:A:') ;
+getopts('suHabgLR:F:f:n:r:p:q:c:D:P:Q:M:o:V:C:G:A:');
 
 my %AA_code = (
     "ALA" => "A",  "ILE" => "I",  "LEU" => "L",  "VAL" => "V",
@@ -294,6 +294,7 @@ foreach my $vcf (@ARGV) {
             my $pass = ($varn/$sam_n > $FRACTION && $varn >= $CNT && $ave_af < $AVEFREQ && $d->[3] eq ".") ? "MULTI" : "TRUE"; # novel and present in $FRACTION samples
             my $mpass = $pass;
 
+            # clinsig is removed if CLN_GENE ie. ClinVar Gene (GENEINFO) is not containing the Gene ie. Gene_Name from Ann array (Ensembl gene)
             if ( $d->[$HDRN{ CLN_GENE }] && $d->[$HDRN{ Gene }] ) {  # make sure ClinVar gene matches the snpEff gene
                 my %cln_genes = map { $_ => 1 } split(/\||\:/, $d->[$HDRN{ CLN_GENE }]);;
                 unless ( exists($cln_genes{ $d->[$HDRN{ Gene }] } )) {
@@ -391,7 +392,7 @@ sub map_CLNSIG_newformat {
     } else {
          $clnsig =~ s/^_//;  # remove leading underscores for secondary annotations,
                              # e.g. Pathogenic,_association,_protective
-         my %map = {
+         my %map = (
             'Uncertain_significance' => 0,
             'Conflicting_interpretations_of_pathogenicity' => 0,
             'not_provided' => 1,
@@ -409,7 +410,7 @@ sub map_CLNSIG_newformat {
             'association' => 255,
             'protective' => 255,
             'Affects' => 255,
-        };
+        );
         return $map{$clnsig};
     }
 }
@@ -418,7 +419,7 @@ sub checkCLNSIG {
     my $clnsig = shift;
     return 0 if( $clnsig eq "" );
     my @cs = split(/\||,/, $clnsig );
-    @cs = map { map_CLNSIG_newformat } @cs;
+    @cs = map { map_CLNSIG_newformat($_) } @cs;
     my $flag255 = 0;
     my $flagno = 0;
     my $flagyes = 0;
@@ -553,12 +554,12 @@ sub USAGE {
 print <<END;
 
 USAGE
-    The program will convert an annotated vcf files by snfEFF using dbSNP and COSMIC back to txt format.  It also checks for quality
+    The program will convert one or many annotated vcf files by snfEFF using dbSNP and COSMIC back into a single txt format. It also checks for quality
     and add "PASS" column.  It will not perform any filtering.
 
     Usage: $0 [-H] [-F var_fraction] [-n sample_cnt] [-f freq] [-p pos] [-q quality] [...] vcf_files
 
-    The program accepts more than one vcf files.
+    The program accepts more than one vcf files. The output txt data will be written to STDOUT.
 
     Options:
     -H Print this help page
