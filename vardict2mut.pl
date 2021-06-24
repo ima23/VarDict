@@ -43,11 +43,11 @@ GetOptions ("n=s" => \$opt_n,
             "y"   => \$opt_y,
             "R=f" => \$opt_R,
             "B=f" => \$opt_B,
-	    "p=s" => \$opt_p,
-	    "a=s" => \$opt_a,
-	    "s=i" => \$opt_s,
-	    "recalfreq" => \$recalfreq,
-	    "FFPE=f" => \$FFPE,
+            "p=s" => \$opt_p,
+            "a=s" => \$opt_a,
+            "s=i" => \$opt_s,
+            "recalfreq" => \$recalfreq,
+            "FFPE=f" => \$FFPE,
             "GMAF=f" => \$GMAF,
             "ruledir=s" => \$ruledir,
             "annotdir=s" => \$opt_a,
@@ -57,8 +57,8 @@ GetOptions ("n=s" => \$opt_n,
             "actionable_hotspot=s" => \$actionable_hotspot,
             "actionable=s" => \$actionable,
             "lastaa=s" => \$LASTAA,
-	    "cosmic_cnt=i" => \$COSM_CNT,
-	    "blackgenes=s" => \$blackgenes,
+            "cosmic_cnt=i" => \$COSM_CNT,
+            "blackgenes=s" => \$blackgenes,
             "compendia_ms7_hotspot=s" => \$compendia_ms7_hotspot) or USAGE();
 if ( $opt_a ) {
     $annotation_dir = $opt_a eq "hg38" ? "/projects/ngs/azbifx/NGS/genomes/hg38/Annotation" : $opt_a;
@@ -87,10 +87,10 @@ my %splice = ();
 if ( -e $SPLICE ) {
     open(SP, $SPLICE);
     while( <SP> ) {
-	chomp;
-	next if ( /^##/ );
+        chomp;
+        next if ( /^##/ );
         my ($p, $g) = split(/\t/);
-	$splice{ $g }->{ $p } = 1;
+        $splice{ $g }->{ $p } = 1;
     }
     close( SP );
 } else {
@@ -101,10 +101,10 @@ my %lastaa = ();
 if ( -e $LASTAA ) {
     open(AA, $LASTAA);
     while( <AA> ) {
-	chomp;
-	next if ( /^##/ );
+        chomp;
+        next if ( /^##/ );
         my ($g, $ap, $acc) = split(/\t/);
-	$lastaa{ $g } = $ap;
+        $lastaa{ $g } = $ap;
     }
     close( AA );
 } else {
@@ -115,10 +115,10 @@ my %blackgenes = ();
 if ( -e $blackgenes ) {
     open(BLACK, $blackgenes);
     while( <BLACK> ) {
-	chomp;
-	next if ( /^##/ );
-	my ($g, $reason) = split(/\t/, $_, 2);
-	$blackgenes{ $g } = $reason;
+        chomp;
+        next if ( /^##/ );
+        my ($g, $reason) = split(/\t/, $_, 2);
+        $blackgenes{ $g } = $reason;
     }
     close( BLACK );
 } else {
@@ -134,11 +134,11 @@ my %filter_snp;
 if ( -e $filter_common_snp ) {
     open( FSNP, $filter_common_snp );
     while( <FSNP> ) {
-	chomp;
-	next if ( /^##/ );
-	my @a = split(/\t/);
-	my $key = join("-", @a[1..4]);
-	$filter_snp{ $key } = 1;
+        chomp;
+        next if ( /^##/ );
+        my @a = split(/\t/);
+        my $key = join("-", @a[1..4]);
+        $filter_snp{ $key } = 1;
     }
     close( FSNP );
 } else {
@@ -149,12 +149,12 @@ my %snpeff_snp;
 if ( -e $snpeffect_export_polymorphic ) {
     open( SESNP, $snpeffect_export_polymorphic );
     while( <SESNP> ) {
-	chomp;
-	next if ( /^##/ );
-	my @a = split(/\t/);
-	my $key = $a[11] ? join("-", @a[11,2]) : $a[5];
-	next unless($key);
-	$snpeff_snp{ $key } = 1 unless( $key eq "-" );
+        chomp;
+        next if ( /^##/ );
+        my @a = split(/\t/);
+        my $key = $a[11] ? join("-", @a[11,2]) : $a[5];
+        next unless($key);
+        $snpeff_snp{ $key } = 1 unless( $key eq "-" );
     }
     close( SESNP );
 } else {
@@ -167,15 +167,15 @@ my %filter_rules;
 if ( -e $filter_common_artifacts ) {
     open( ART, $filter_common_artifacts );
     while( <ART> ) {
-	chomp;
-	next if ( /^##/ );
-	my @a = split(/\t/);
-	if ( $a[5] eq "rule" ) {
-	    push(@{ $filter_rules{ $a[0] }->{ $a[4] } }, [@a[1,2,3,6]]);
-	} else {
-	    my $key = join("-", @a[1..4]);
-	    $filter_art{ $key } = 1;
-	}
+        chomp;
+        next if ( /^##/ );
+        my @a = split(/\t/);
+        if ( $a[5] eq "rule" ) {
+            push(@{ $filter_rules{ $a[0] }->{ $a[4] } }, [@a[1,2,3,6]]);
+        } else {
+            my $key = join("-", @a[1..4]);
+            $filter_art{ $key } = 1;
+        }
     }
     close( ART );
 } else {
@@ -188,17 +188,17 @@ my %comm_snp;
 if ( -e $actionable_hotspot ) {
     open( ACTHOT, $actionable_hotspot );
     while( <ACTHOT> ) {
-	chomp;
-	next if ( /^##/ ); # comment line
-	my ($gene, $pchg, $sg) = split(/\t/);
-	if ( $gene =~ /^#/ ) { # VUS, No special treatment for now
-	    $gene =~ s/^#//;
-	} elsif ( $gene =~ /^\^/ || $sg eq "1" || $sg eq "2" ) { # common variant
-	    $gene =~ s/^\^//;
-	    $comm_snp{ "$gene-$pchg" } = 1;
-	} else { # actionable
-	    $act_hot{ "$gene-$pchg" } = $sg eq "somatic" ? "somatic" : "germline";
-	}
+        chomp;
+        next if ( /^##/ ); # comment line
+        my ($gene, $pchg, $sg) = split(/\t/);
+        if ( $gene =~ /^#/ ) { # VUS, No special treatment for now
+            $gene =~ s/^#//;
+        } elsif ( $gene =~ /^\^/ || $sg eq "1" || $sg eq "2" ) { # common variant
+            $gene =~ s/^\^//;
+            $comm_snp{ "$gene-$pchg" } = 1;
+        } else { # actionable
+            $act_hot{ "$gene-$pchg" } = $sg eq "somatic" ? "somatic" : "germline";
+        }
     }
     close( ACTHOT );
 } else {
@@ -212,25 +212,25 @@ my %rules;
 if ( -e $actionable ) {
     open( ACT, $actionable );
     while( <ACT> ) {
-	chomp;
-	next if ( /^##/ );
-	my @a = split(/\t/);
-	if ( $a[7] eq "germline" ) {
-	    my $key = join("-", @a[1..4]);
-	    $act_germ{ $key } = "germline";
-	} elsif ( $a[7] eq "somatic" ) {
-	    if ( $a[6] eq "rule" ) {
-		if ( $a[4] eq "*" && length($a[3]) == 1 ) {
-		    my $key = join("-", @a[1..3]);
-		    $act_som{ $key } = 1;
-		} else {
-		    push(@{ $rules{ $a[5] }->{ $a[0] } }, [@a[1,2,3,4,8]]);
-		}
-	    } else {
-		my $key = join("-", @a[1..4]);
-		$act_som{ $key } = $a[8] ? $a[8] : 1;
-	    }
-	}
+        chomp;
+        next if ( /^##/ );
+        my @a = split(/\t/);
+        if ( $a[7] eq "germline" ) {
+            my $key = join("-", @a[1..4]);
+            $act_germ{ $key } = "germline";
+        } elsif ( $a[7] eq "somatic" ) {
+            if ( $a[6] eq "rule" ) {
+                if ( $a[4] eq "*" && length($a[3]) == 1 ) {
+                    my $key = join("-", @a[1..3]);
+                    $act_som{ $key } = 1;
+                } else {
+                    push(@{ $rules{ $a[5] }->{ $a[0] } }, [@a[1,2,3,4,8]]);
+                }
+            } else {
+                my $key = join("-", @a[1..4]);
+                $act_som{ $key } = $a[8] ? $a[8] : 1;
+            }
+        }
     }
     close( ACT );
 } else {
@@ -243,14 +243,14 @@ my %hotspotprot;
 if ( -e $compendia_ms7_hotspot ) {
     open( HOT, $compendia_ms7_hotspot );
     while( <HOT> ) {
-	chomp;
-	next if ( /^##/ );
-	my @a = split(/\t/);
-	next if ( $a[5] =~ /^g./ );
-	my $key = join("-", @a[1..4]);
-	$hotspotnt{ $key } = 1;
-	next unless( $a[6] );
-	$hotspotprot{ "$a[0]-$a[6]" } = 1;
+        chomp;
+        next if ( /^##/ );
+        my @a = split(/\t/);
+        next if ( $a[5] =~ /^g./ );
+        my $key = join("-", @a[1..4]);
+        $hotspotnt{ $key } = 1;
+        next unless( $a[6] );
+        $hotspotprot{ "$a[0]-$a[6]" } = 1;
     }
     close( HOT );
 } else {
@@ -294,70 +294,70 @@ while( <> ) {
     my $act = isActionable( $chr, @a[2,4,5], $a[$hdrs{Gene}], $a[$aachgcol], $a[$cosmaachgcol], \@a, $af, $a[$hdrs{CLNSIG}] );
     my $sgz = $act;
     if ( filterRule( $chr, @a[2,4,5], $a[$hdrs{Gene}], $a[$aachgcol], $a[$cosmaachgcol], \@a, $af, $a[$hdrs{CLNSIG}] ) ) {
-	print STDERR "$chr @a[2,4,5] $a[$hdrs{Gene}] filtered by rules.\n" if ( $opt_y );
-	next;
+        print STDERR "$chr @a[2,4,5] $a[$hdrs{Gene}] filtered by rules.\n" if ( $opt_y );
+        next;
     }
     if ( $comm_snp{ "$a[$hdrs{Gene}]-$a[$hdrs{Amino_Acid_Change}]" } ) {
-	print STDERR "Filtered as it's curated as common SNP: $a[$hdrs{Gene}]-$a[$hdrs{Amino_Acid_Change}].\n" if ( $opt_y );
-	next;
+        print STDERR "Filtered as it's curated as common SNP: $a[$hdrs{Gene}]-$a[$hdrs{Amino_Acid_Change}].\n" if ( $opt_y );
+        next;
     } elsif ( $comm_snp{ "$a[$hdrs{Gene}]-$a[$hdrs{cDNA_Change}]" } ) {
-	print STDERR "Filtered as it's curated as common SNP: $a[$hdrs{Gene}]-$a[$hdrs{cDNA_Change}].\n" if ( $opt_y );
-	next;
+        print STDERR "Filtered as it's curated as common SNP: $a[$hdrs{Gene}]-$a[$hdrs{cDNA_Change}].\n" if ( $opt_y );
+        next;
     }
 
     unless( $act ) {
-	if ( $filter_snp{ $key } ) {
-	    print STDERR "Filtered as common SNP $key\n" if ( $opt_y );
-	    next;
-	}
-	if ( $filter_art{ $key } && $af < 0.35 ) {
-	    print STDERR "Filtered as likely artifact $key AF: $af < 0.35\n" if ( $opt_y );
-	    next;
-	}
-	my @gmaf = split(/,/, $a[$hdrs{GMAF}]);
-	my $flag = @gmaf ? 0 : 1;
-	foreach my $maf (@gmaf) {
-	    unless( $sgz ) {
-		$sgz = "germline" if ( $af > 0.15 ); # Only if the AF is higher than 15%.
-	    }
-	    $flag = 1 if ( $maf && $maf =~ /\d/ && $maf <= $GMAF );
-	    $flag = 1 if ( $maf && $maf eq "NA" );
-	}
-	unless( $flag ) {
-	    print STDERR "Filtered as GMAF is higher than $GMAF $key @gmaf\n" if ( $opt_y );
-	    next;
-	}
-	#my $clncheck = checkCLNSIG($a[$hdrs{CLNSIG}]);
-	next if ( $a[$classcol] eq "dbSNP" );
-	next if ( $snpeff_snp{ "$a[$hdrs{Gene}]-$a[$hdrs{Amino_Acid_Change}]" } && $a[$classcol] ne "ClnSNP_known" );
+        if ( $filter_snp{ $key } ) {
+            print STDERR "Filtered as common SNP $key\n" if ( $opt_y );
+            next;
+        }
+        if ( $filter_art{ $key } && $af < 0.35 ) {
+            print STDERR "Filtered as likely artifact $key AF: $af < 0.35\n" if ( $opt_y );
+            next;
+        }
+        my @gmaf = split(/,/, $a[$hdrs{GMAF}]);
+        my $flag = @gmaf ? 0 : 1;
+        foreach my $maf (@gmaf) {
+            unless( $sgz ) {
+                $sgz = "germline" if ( $af > 0.15 ); # Only if the AF is higher than 15%.
+            }
+            $flag = 1 if ( $maf && $maf =~ /\d/ && $maf <= $GMAF );
+            $flag = 1 if ( $maf && $maf eq "NA" );
+        }
+        unless( $flag ) {
+            print STDERR "Filtered as GMAF is higher than $GMAF $key @gmaf\n" if ( $opt_y );
+            next;
+        }
+        #my $clncheck = checkCLNSIG($a[$hdrs{CLNSIG}]);
+        next if ( $a[$classcol] eq "dbSNP" );
+        next if ( $snpeff_snp{ "$a[$hdrs{Gene}]-$a[$hdrs{Amino_Acid_Change}]" } && $a[$classcol] ne "ClnSNP_known" );
     }
     if ( $opt_D && $a[$hdrs{Depth}] < $opt_D ) {
-	next unless( $a[$hdrs{Depth}] > 2*$opt_D/3 && $af > 0.3 ); # rescue some high AF variants even though depth is not enough
+        next unless( $a[$hdrs{Depth}] > 2*$opt_D/3 && $af > 0.3 ); # rescue some high AF variants even though depth is not enough
     }
 
     # Filter strand biased variants
     if ( $opt_B && $a[$hdrs{Bias}] ne "2:2" && (! ($a[5] =~ /</ || length($a[5]) + length($a[4]) > 101)) ) { # Don't apply to structural variants
-	if ( $a[$hdrs{Bias}] eq "2:1" && $a[$hdrs{SBF}] < $opt_B * 10) {
-	    print STDERR "Filtered as it has only single strand support '2:1' while reference has both $key\n" if ( $opt_y );
-	    next;
-	}
-	if ( $a[$hdrs{Bias}] eq "2:0" && $a[$hdrs{SBF}] < $opt_B ) {
-	    print STDERR "Filtered as it has only single strand support '2:0' and p-value < $opt_B while reference has both $key\n" if ( $opt_y );
-	    next;
-	}
-	# Filter variants with opposite supporting strands for REF and ALT
-	if ( $a[$hdrs{Bias}] eq "1:1" && $a[$hdrs{SBF}] < $opt_B/10 ) {
-	    print STDERR "Filtered as it has only single strand support '1:1' and p-value < $opt_B/10 while reference has both $key\n" if ( $opt_y );
-	    next;
-	}
+        if ( $a[$hdrs{Bias}] eq "2:1" && $a[$hdrs{SBF}] < $opt_B * 10) {
+            print STDERR "Filtered as it has only single strand support '2:1' while reference has both $key\n" if ( $opt_y );
+            next;
+        }
+        if ( $a[$hdrs{Bias}] eq "2:0" && $a[$hdrs{SBF}] < $opt_B ) {
+            print STDERR "Filtered as it has only single strand support '2:0' and p-value < $opt_B while reference has both $key\n" if ( $opt_y );
+            next;
+        }
+        # Filter variants with opposite supporting strands for REF and ALT
+        if ( $a[$hdrs{Bias}] eq "1:1" && $a[$hdrs{SBF}] < $opt_B/10 ) {
+            print STDERR "Filtered as it has only single strand support '1:1' and p-value < $opt_B/10 while reference has both $key\n" if ( $opt_y );
+            next;
+        }
 
-	if ( $hdrs{ ALD } ) {
-	    my ($frd, $rrd) = split(/,/, $a[$hdrs{ ALD }]);
-	    if ( $a[$hdrs{Bias}] =~ /^2/ && $frd * $rrd == 0 && ($frd + $rrd >= 5)) {
-		print STDERR "Filtered as it has only single strand support ($frd, $rrd) while reference has both $key\n" if ( $opt_y );
-		next;
-	    }
-	}
+        if ( $hdrs{ ALD } ) {
+            my ($frd, $rrd) = split(/,/, $a[$hdrs{ ALD }]);
+            if ( $a[$hdrs{Bias}] =~ /^2/ && $frd * $rrd == 0 && ($frd + $rrd >= 5)) {
+                print STDERR "Filtered as it has only single strand support ($frd, $rrd) while reference has both $key\n" if ( $opt_y );
+                next;
+            }
+        }
     }
 
     my @snps = $a[3] =~ /(rs\d+)/g;
@@ -365,18 +365,18 @@ while( <> ) {
     next if ( $gene =~ /\S\S\S-\S\S\S/ ); # ignore readthrough genes
     foreach my $rs (@snps) {
         if ( $snpeff_snp{ $rs } ) {
-	    print STDERR "Filtered as in SnpEff database. $rs $gene $key\n" if ( $opt_y );
-	    next;
-	}
+            print STDERR "Filtered as in SnpEff database. $rs $gene $key\n" if ( $opt_y );
+            next;
+        }
     }
     my $aachg = $a[$aachgcol];
 
     # Filter genes in black list
     if ( $blackgenes{ $gene } ) {
         unless( $act ) {
-	    print STDERR "Filtered due to $gene is on black gene list as $blackgenes{ $gene }.\n" if ( $opt_y );
-	    next;
-	}
+            print STDERR "Filtered due to $gene is on black gene list as $blackgenes{ $gene }.\n" if ( $opt_y );
+            next;
+        }
     }
 
     # Ignore HLA genes unless -O is specified
@@ -387,8 +387,8 @@ while( <> ) {
     next if ( $gene =~ /^OR\d+[A-Z]/ ); # Ignore olfactory genes
 
     unless( $opt_p ) {
-	$platform = $sample =~ /[_-]([^_\d]+?)$/ ? $1 : "";
-	$platform = "" unless( $platform =~ /^WXS/i || $platform =~ /^RNA-Seq/i || $platform =~ /^VALIDATION/i || $platform =~ /^WGS/ );
+        $platform = $sample =~ /[_-]([^_\d]+?)$/ ? $1 : "";
+        $platform = "" unless( $platform =~ /^WXS/i || $platform =~ /^RNA-Seq/i || $platform =~ /^VALIDATION/i || $platform =~ /^WGS/ );
     }
 
     if ( $opt_n && $sample =~ /$opt_n/ ) {
@@ -400,19 +400,19 @@ while( <> ) {
     my ($type, $fclass, $gene_coding) = @a[$typecol, $funccol, $genecodecol];
     my $cdna = $a[$hdrs{ cDNA_Change }];
     if ( $opt_i ) { # filter likely artifacts
-	if ( $cdna =~ /del(\S+)ins(\S+)/ ) { # filter likely artifact of complex variants due to chimeric reads
-	    my $dels = length($1);
-	    my $inss = length($2);
-	    next if ($dels > 20 && $inss > 20 && $af < 0.2);
-	} elsif ( $cdna =~ /del(\d+)/ ) {
-	    next if ( $1 > 100 && $af < 0.2 && $af * $a[$hdrs{Depth}] <= 8 ); # > 100bp deletions with AF < 20%
-	} elsif ( $cdna =~ /del([AGTC]+)/ ) {
-	    next if ( length($1) > 100 && $af < 0.2 && $af * $a[$hdrs{Depth}] <= 8 ); # > 100bp deletions with AF < 20%
-	} elsif ( $cdna =~ /\dins(\d+)/ ) {
-	    next if ( $1 > 100 && $af < 0.2 && $af * $a[$hdrs{Depth}] <= 8 ); # > 100bp insertion with AF < 20%
-	} elsif ( $cdna =~ /\dins([AGTC]+)/ ) {
-	    next if ( length($1) > 100 && $af < 0.2 && $af * $a[$hdrs{Depth}] <= 8 ); # > 100bp insertion with AF < 20%
-	}
+        if ( $cdna =~ /del(\S+)ins(\S+)/ ) { # filter likely artifact of complex variants due to chimeric reads
+            my $dels = length($1);
+            my $inss = length($2);
+            next if ($dels > 20 && $inss > 20 && $af < 0.2);
+        } elsif ( $cdna =~ /del(\d+)/ ) {
+            next if ( $1 > 100 && $af < 0.2 && $af * $a[$hdrs{Depth}] <= 8 ); # > 100bp deletions with AF < 20%
+        } elsif ( $cdna =~ /del([AGTC]+)/ ) {
+            next if ( length($1) > 100 && $af < 0.2 && $af * $a[$hdrs{Depth}] <= 8 ); # > 100bp deletions with AF < 20%
+        } elsif ( $cdna =~ /\dins(\d+)/ ) {
+            next if ( $1 > 100 && $af < 0.2 && $af * $a[$hdrs{Depth}] <= 8 ); # > 100bp insertion with AF < 20%
+        } elsif ( $cdna =~ /\dins([AGTC]+)/ ) {
+            next if ( length($1) > 100 && $af < 0.2 && $af * $a[$hdrs{Depth}] <= 8 ); # > 100bp insertion with AF < 20%
+        }
     }
     if ( $type =~ /upstream/i || $type =~ /downstream/i ) {
         next unless( $act );
@@ -429,31 +429,31 @@ while( <> ) {
 
     # For FFPE G>A and C>T artifacts
     if ( $FFPE && ($cdna =~ /\dC>T$/ || $cdna =~ /\dG>A$/) ) {
-	next unless( $af > $FFPE );
+        next unless( $af > $FFPE );
     }
 
     # Filter low AF MSI
     my $msi = $a[$msicol];
     if ( abs(length($a[4])-length($a[5])) >= 1 && abs(length($a[4])-length($a[5])) <= 3 && $msi > 1 ) {  
-	if ( $msi <= 3 ) {
-	    next if ( $af < 0.005 );
-	} elsif ( $msi <= 4 ) {
-	    next if ( $af < 0.008 );
-	} elsif ( $msi <= 7 ) {
-	    next if ( $af < 0.02 );
-	} elsif ( $msi == 8 ) {
-	    next if ( $af < 0.04 );
-	} elsif ( $msi == 9 ) {
-	    next if ( $af < 0.125 );
-	} elsif ( $msi == 10 ) {
-	    next if ( $af < 0.175 );
-	} elsif ( $msi == 11 ) {
-	    next if ( $af < 0.25 );
-	} elsif ( $msi == 12 ) {
-	    next if ( $af < 0.3 );
-	} elsif ( $msi > 12 ) {
-	    next if ( $af < 0.35 );
-	}
+        if ( $msi <= 3 ) {
+            next if ( $af < 0.005 );
+        } elsif ( $msi <= 4 ) {
+            next if ( $af < 0.008 );
+        } elsif ( $msi <= 7 ) {
+            next if ( $af < 0.02 );
+        } elsif ( $msi == 8 ) {
+            next if ( $af < 0.04 );
+        } elsif ( $msi == 9 ) {
+            next if ( $af < 0.125 );
+        } elsif ( $msi == 10 ) {
+            next if ( $af < 0.175 );
+        } elsif ( $msi == 11 ) {
+            next if ( $af < 0.25 );
+        } elsif ( $msi == 12 ) {
+            next if ( $af < 0.3 );
+        } elsif ( $msi > 12 ) {
+            next if ( $af < 0.35 );
+        }
     } elsif ( abs(length($a[4])-length($a[5])) == 3 && $msi >= 5 ) {
         next if ( $af < 0.10 ); # ignore low AF in 3nt MSI region
     }
@@ -474,113 +474,113 @@ while( <> ) {
         $status = "unknown";
     } 
     if ( $type =~ /splice/i && ($type =~ /acceptor/i || $type =~ /donor/i) ) {
-	my $spflag = 1;
-	if ( $cdna =~ /[\+-](\d+)_-?\d+[\+-](\d+)/ ) {
-	    $spflag = 0 if ( $1 > 2 && $2 > 2 );
-	} elsif ( $cdna =~ /^.\.\d+[\+-](\d+)[a-z]/ ) {
-	    $spflag = 0;
-	}
-	if ( $spflag ) {
-	    $status = "likely" unless( $status eq "known" );
-	    $a[10] = "splice";
-	}
+        my $spflag = 1;
+        if ( $cdna =~ /[\+-](\d+)_-?\d+[\+-](\d+)/ ) {
+            $spflag = 0 if ( $1 > 2 && $2 > 2 );
+        } elsif ( $cdna =~ /^.\.\d+[\+-](\d+)[a-z]/ ) {
+            $spflag = 0;
+        }
+        if ( $spflag ) {
+            $status = "likely" unless( $status eq "known" );
+            $a[10] = "splice";
+        }
     } elsif ( length($a[10]) == 0 && ($type =~ /SPLICE/i && $type !~ /region_variant/) ) {
         if ( $a[$hdrs{cDNA_Change}] ) {
-	    if ($a[$hdrs{cDNA_Change}] =~ /\d+\+(\d+)/) {
-	        if ( $1 <= 2 ) {
-		    $status = "likely" unless( $status eq "known" );
-		    $a[10] = "splice";
-		}
-	    } elsif ( $a[$hdrs{cDNA_Change}] =~ /\d+-(\d+)[^_]\S+$/ ) {
-	        if ( $1 <= 2 ) {
-		    $status = "likely" unless( $status eq "known" );
-		    $a[10] = "splice";
-		}
-	    }
-	} else {  # No cDNA_Change, for earlier version compatibility
-	    $status = "likely" unless( $status eq "known" );
-	    $a[10] = "splice";
-	}
+            if ($a[$hdrs{cDNA_Change}] =~ /\d+\+(\d+)/) {
+                if ( $1 <= 2 ) {
+                    $status = "likely" unless( $status eq "known" );
+                    $a[10] = "splice";
+                }
+            } elsif ( $a[$hdrs{cDNA_Change}] =~ /\d+-(\d+)[^_]\S+$/ ) {
+                if ( $1 <= 2 ) {
+                    $status = "likely" unless( $status eq "known" );
+                    $a[10] = "splice";
+                }
+            }
+        } else {  # No cDNA_Change, for earlier version compatibility
+            $status = "likely" unless( $status eq "known" );
+            $a[10] = "splice";
+        }
     }
     if ( $a[$classcol] eq "COSMIC" ) {
-	if ( $hdrs{ COSMIC_Cnt } ) {
-	    my @cnts = split(/,/, $a[$hdrs{ COSMIC_Cnt }]);
-	    foreach my $cnt (@cnts) {
-		if ( $cnt >= $COSM_CNT ) {
-		    $status = "likely" unless( $status eq "known" );
-		}
-	    }
-	}
-	if ( $a[$cosmaachgcol] ) {
-	    $a[$cosmaachgcol] =~ s/^p\.//;
-	}
+        if ( $hdrs{ COSMIC_Cnt } ) {
+            my @cnts = split(/,/, $a[$hdrs{ COSMIC_Cnt }]);
+            foreach my $cnt (@cnts) {
+                if ( $cnt >= $COSM_CNT ) {
+                    $status = "likely" unless( $status eq "known" );
+                }
+            }
+        }
+        if ( $a[$cosmaachgcol] ) {
+            $a[$cosmaachgcol] =~ s/^p\.//;
+        }
     }
     if ( isHotspotNT($chr, @a[2,4,5]) ) {
         $status = "likely" unless( $status eq "known" );
-	#print STDERR "$a[6] $a[11] @a[2,4,5] $status\n";
+        #print STDERR "$a[6] $a[11] @a[2,4,5] $status\n";
     } elsif ( isHotspotProt( $a[$hdrs{Gene}], $a[$hdrs{Amino_Acid_Change}] ) ) {
         $status = "likely" unless( $status eq "known" );
     }
     if ($act_som{ $key } || $act_germ{ $key }) {
-	$status = "known";
+        $status = "known";
     }
     if ( $act ) {
-	$status = "known"; 
-	next if ( $af < $ACTMINAF );
-	#next if ( $af < 0.025 && $gene eq "TP53" ); # As TP53 is early event, it should be a little more stringent
-	next if ( $af < 0.15 && $act eq "germline" );
+        $status = "known"; 
+        next if ( $af < $ACTMINAF );
+        #next if ( $af < 0.025 && $gene eq "TP53" ); # As TP53 is early event, it should be a little more stringent
+        next if ( $af < 0.15 && $act eq "germline" );
     } else {
         #next if ( $type =~ /^INTRON/i || $type =~ /^SYNONYMOUS_/i || $fclass eq "SILENT" || ($type =~ /splice_region_variant/ && $a[10] eq "") );
         if ( $type =~ /^SYNONYMOUS_/i || $fclass eq "SILENT" ) {
-	    next if ( $a[$classcol] eq "dbSNP" || $a[$hdrs{ID}] =~ /rs/ );
-	    next if( $opt_S );
-	}
+            next if ( $a[$classcol] eq "dbSNP" || $a[$hdrs{ID}] =~ /rs/ );
+            next if( $opt_S );
+        }
         if ( ($type =~ /^INTRON/i || ($type =~ /splice/i && $a[10] eq "")) && $status eq "unknown" ) {
-	    if ( $opt_N ) {
-	        $status = "unknown";
-	    } else {
-	        next;
-	    }
-	}
-	if ( $type =~ /^intron_variant/i && $status ne "known" ) {
-	    if ( $opt_N ) {
-	        $status = "unknown";
-	    } else {
-	        next;
-	    }
-	}
-	if ( $type =~ /^sequence_feature/i && $status ne "known" ) {
-	    if ( $opt_N ) {
-	        $status = "unknown";
-	    } else {
-	        next;
-	    }
-	}
-	next if ( $af < $MINAF );
+            if ( $opt_N ) {
+                $status = "unknown";
+            } else {
+                next;
+            }
+        }
+        if ( $type =~ /^intron_variant/i && $status ne "known" ) {
+            if ( $opt_N ) {
+                $status = "unknown";
+            } else {
+                next;
+            }
+        }
+        if ( $type =~ /^sequence_feature/i && $status ne "known" ) {
+            if ( $opt_N ) {
+                $status = "unknown";
+            } else {
+                next;
+            }
+        }
+        next if ( $af < $MINAF );
     }
 
     if ( $opt_V ) {
-	if ( $a[$hdrs{VD}] < $opt_V ) {
-	    if ( $status eq "known" && $sgz && $sgz eq "somatic" ) {
-		if ( $a[$hdrs{VD}] >= $opt_V - 2 && $a[$hdrs{VD}] >= 3 ) { ;  # relax the threshold for known somatic hotspot
-		    print STDERR "$gene $a[10] $a[$hdrs{cDNA_Change}] in $sample with $af and $a[$hdrs{VD}]/$a[$hdrs{Depth}] reads rescued\n" if ( $opt_y );
-		} else {
-		    print STDERR "$gene $a[10] $a[$hdrs{cDNA_Change}] in $sample with $af and $a[$hdrs{VD}]/$a[$hdrs{Depth}] reads filtered\n" if ( $opt_y );
-		    next;
-		}
-	    } else {
-		next unless( $af >= 0.35 );
-	    }
-	}
+        if ( $a[$hdrs{VD}] < $opt_V ) {
+            if ( $status eq "known" && $sgz && $sgz eq "somatic" ) {
+                if ( $a[$hdrs{VD}] >= $opt_V - 2 && $a[$hdrs{VD}] >= 3 ) { ;  # relax the threshold for known somatic hotspot
+                    print STDERR "$gene $a[10] $a[$hdrs{cDNA_Change}] in $sample with $af and $a[$hdrs{VD}]/$a[$hdrs{Depth}] reads rescued\n" if ( $opt_y );
+                } else {
+                    print STDERR "$gene $a[10] $a[$hdrs{cDNA_Change}] in $sample with $af and $a[$hdrs{VD}]/$a[$hdrs{Depth}] reads filtered\n" if ( $opt_y );
+                    next;
+                }
+            } else {
+                next unless( $af >= 0.35 );
+            }
+        }
     }
     #next if ( $status ne "known" && ($type =~ /^UPSTREAM/i || $type =~ /^DOWNSTREAM/i || $type =~ /^INTERGENIC/i || $type =~ /^INTRAGENIC/i || ($type =~ /UTR_/ && $type !~ /codon/i ) || $gene_coding =~ /NON_CODING/i || $fclass =~ /^NON_CODING/i) );
     next if ( $status ne "known" && ($type =~ /^UPSTREAM/i || $type =~ /^DOWNSTREAM/i || $type =~ /^INTERGENIC/i || $type =~ /^INTRAGENIC/i || $gene_coding =~ /NON_CODING/i || $fclass =~ /^NON_CODING/i) );
     if ( $status ne "known" && $type =~ /UTR_/ ) {
         if ( $opt_N ) {
-	    $status = "unknown";
-	} else { 
-	    next;
-	}
+            $status = "unknown";
+        } else { 
+            next;
+        }
     }
     next if ( $a[$classcol] eq "dbSNP" && $status ne "known" );
 
@@ -591,43 +591,43 @@ while( <> ) {
 
     if ( $opt_R && $status ne "known" && $a[$hdrs{ Pcnt_sample }] >= $MAXRATE && $a[$hdrs{ N_Var }] >= $MINCOMSAMPLE ) {
         if ( $opt_r ) {
-	    #print "$_\t$status\n";
-	    print join("\t", $sample, $platform, "short-variant", $gene, $status, $a[10], $a[$hdrs{cDNA_Change}], "$chr:$a[2]", $a[$hdrs{Depth}], sprintf("%.2f", $af*100), "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-");
-	    print $statuscol ? "\t$a[$statuscol]\n" : "\n";
-	} else {
-	    next if ( $status eq "unknown" );
-	    next if ( ($a[$classcol] =~ /dbSNP/ || $a[$classcol] eq "Novel") && $a[$hdrs{ Ave_AF }] > 0.15 ); # high prevalent variant with average AF > 0.25 or 25% and in dbSNP.
-	    #next unless( $af > 0.25 && ($a[$hdrs{ Ave_AF } ] && $af > 10*$a[$hdrs{ Ave_AF }] || $af > 0.4));
-	    next unless( $af > 0.25 || (($a[$hdrs{ Ave_AF } ] && $af > 5*$a[$hdrs{ Ave_AF }]) && $af > 0.03));
-	}
+            #print "$_\t$status\n";
+            print join("\t", $sample, $platform, "short-variant", $gene, $status, $a[10], $a[$hdrs{cDNA_Change}], "$chr:$a[2]", $a[$hdrs{Depth}], sprintf("%.2f", $af*100), "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-");
+            print $statuscol ? "\t$a[$statuscol]\n" : "\n";
+        } else {
+            next if ( $status eq "unknown" );
+            next if ( ($a[$classcol] =~ /dbSNP/ || $a[$classcol] eq "Novel") && $a[$hdrs{ Ave_AF }] > 0.15 ); # high prevalent variant with average AF > 0.25 or 25% and in dbSNP.
+            #next unless( $af > 0.25 && ($a[$hdrs{ Ave_AF } ] && $af > 10*$a[$hdrs{ Ave_AF }] || $af > 0.4));
+            next unless( $af > 0.25 || (($a[$hdrs{ Ave_AF } ] && $af > 5*$a[$hdrs{ Ave_AF }]) && $af > 0.03));
+        }
     }
     next if ( $opt_r && (!$recalfreq) );
     unless( $sgz ) {
-	if ( $a[3] =~ /rs\d+/ && $a[3] !~ /COSM/ && $af > 0.25 ) {
-	    $sgz = "germline";
-	} else {
-	    $sgz = ($type =~ /fusion/ || (! $a[10])) ? "Non-TMB" : "TMB"; 
-	}
+        if ( $a[3] =~ /rs\d+/ && $a[3] !~ /COSM/ && $af > 0.25 ) {
+            $sgz = "germline";
+        } else {
+            $sgz = ($type =~ /fusion/ || (! $a[10])) ? "Non-TMB" : "TMB"; 
+        }
     }
     if ( $recalfreq ) {
         push(@data, [@a, $status, "$chr-$a[2]-$a[4]-$a[5]", $sgz]);
-	$mut2sam{ "$chr-$a[2]-$a[4]-$a[5]" }->{ $sample } = $af;
+        $mut2sam{ "$chr-$a[2]-$a[4]-$a[5]" }->{ $sample } = $af;
     } else {
-	if ( $opt_M ) {
-	    unless( $type =~ /fusion/i ) {
-		print join("\t", $sample, $platform, "short-variant", $gene, $status, $a[10], $hdrs{cDNA_Change} && $a[$hdrs{cDNA_Change}] ? $a[$hdrs{cDNA_Change}] : "", "$chr:$a[2]", $a[$hdrs{Depth}], sprintf("%.2f", $af*100), $a[3], "-", "-", "-", "-", "-", "-", "-", "-", "-", "-");
-	    } else {
-	        my ($g1, $g2) = split(/\&/, $gene, 2);
-		$status = "likely" if ( $status eq "unknown" );
-		if ( $a[$hdrs{cDNA_Change}] && $a[$hdrs{cDNA_Change}] =~ /(\d+)_(\d+)/ ) {
-		    ($g1, $g2) = ($g2, $g1) if ( $1 > $2 );
-		}
-		print join("\t", $sample, $platform, "fusion", $g1, $status, "$g1-$g2", $hdrs{cDNA_Change} && $a[$hdrs{cDNA_Change}] ? $a[$hdrs{cDNA_Change}] : "", "$chr:$a[2]", $a[$hdrs{Depth}], sprintf("%.2f", $af*100), $a[3], "-", "-", "-", $g1, $g2, "fusion", "-", "$chr:$a[2]", "$chr:$a[$endcol]", "-");
-	    }
-	    print $statuscol ? "\t$a[$statuscol]\t$sgz\n" : "\t$sgz\n";
-	} else {
-	    print "$_\t$status\t$sgz\n";
-	}
+        if ( $opt_M ) {
+            unless( $type =~ /fusion/i ) {
+                print join("\t", $sample, $platform, "short-variant", $gene, $status, $a[10], $hdrs{cDNA_Change} && $a[$hdrs{cDNA_Change}] ? $a[$hdrs{cDNA_Change}] : "", "$chr:$a[2]", $a[$hdrs{Depth}], sprintf("%.2f", $af*100), $a[3], "-", "-", "-", "-", "-", "-", "-", "-", "-", "-");
+            } else {
+                my ($g1, $g2) = split(/\&/, $gene, 2);
+                $status = "likely" if ( $status eq "unknown" );
+                if ( $a[$hdrs{cDNA_Change}] && $a[$hdrs{cDNA_Change}] =~ /(\d+)_(\d+)/ ) {
+                    ($g1, $g2) = ($g2, $g1) if ( $1 > $2 );
+                }
+                print join("\t", $sample, $platform, "fusion", $g1, $status, "$g1-$g2", $hdrs{cDNA_Change} && $a[$hdrs{cDNA_Change}] ? $a[$hdrs{cDNA_Change}] : "", "$chr:$a[2]", $a[$hdrs{Depth}], sprintf("%.2f", $af*100), $a[3], "-", "-", "-", $g1, $g2, "fusion", "-", "$chr:$a[2]", "$chr:$a[$endcol]", "-");
+            }
+            print $statuscol ? "\t$a[$statuscol]\t$sgz\n" : "\t$sgz\n";
+        } else {
+            print "$_\t$status\t$sgz\n";
+        }
     }
 }
 
@@ -635,48 +635,48 @@ if ( $recalfreq ) {
     my $samcnt = (keys %samples) + 0;
     while( my ($k, $r) = each %mut2sam ) {
         $mutcnt{ $k }->{ cnt } = (keys %$r) + 0;
-	my @tmp = values %$r;
-	$mutcnt{ $k }->{ pt75 } = $stat->prctile(\@tmp, 75);
-	$mutcnt{ $k }->{ median } = $stat->median(\@tmp);
+        my @tmp = values %$r;
+        $mutcnt{ $k }->{ pt75 } = $stat->prctile(\@tmp, 75);
+        $mutcnt{ $k }->{ median } = $stat->median(\@tmp);
     }
     foreach my $d (@data) {
-	my $sgz = pop( @$d );
-	my $k = pop( @$d );
-	$d->[$hdrs{ N_Var }] = $mutcnt{$k}->{ cnt };
-	$d->[$hdrs{ N_samples }] = $samcnt;
+        my $sgz = pop( @$d );
+        my $k = pop( @$d );
+        $d->[$hdrs{ N_Var }] = $mutcnt{$k}->{ cnt };
+        $d->[$hdrs{ N_samples }] = $samcnt;
         $d->[$hdrs{ Pcnt_sample }] = sprintf("%.2f", $mutcnt{ $k }->{ cnt }/$samcnt);
-	$d->[$hdrs{ Ave_AF }] = $mutcnt{$k}->{ median };
-	my $type = $d->[$hdrs{ Type }];
-	my $status = pop( @$d );
-	my $sample = $d->[0];
+        $d->[$hdrs{ Ave_AF }] = $mutcnt{$k}->{ median };
+        my $type = $d->[$hdrs{ Type }];
+        my $status = pop( @$d );
+        my $sample = $d->[0];
         $sample = $1 if ( $opt_n && $sample =~ /$opt_n/ );
-	my $gene = $d->[$genecol];
-	if ( $opt_R && $status ne "known" && $d->[$hdrs{ Pcnt_sample }] >= $MAXRATE && $d->[$hdrs{ N_Var }] >= $MINCOMSAMPLE ) {
-	    if ( $opt_r ) {
-		#print "$_\t$status\n";
-		print join("\t", $sample, $platform, "short-variant", $gene, $status, $d->[10], $d->[$hdrs{cDNA_Change}], "$d->[1]:$d->[2]", $d->[$hdrs{Depth}], sprintf("%.2f", $d->[$afcol]*100), $d->[3], "-", "-", "-", "-", "-", "-", "-", "-", "-", "-"), "\n";
-		#print $statuscol ? "\t$a[$statuscol]\n" : "\n";
-	    } else {
-		next if ( $status eq "unknown" );
-		#next unless( $d->[$afcol]  > 0.25 && ($d->[$afcol] > 10*$d->[$hdrs{ Ave_AF }] || $d->[$afcol] > 0.4));
-		next unless( $d->[$afcol] > 0.25 || (($d->[$afcol] > 5*$d->[$hdrs{ Ave_AF }]) && $d->[$afcol] > 0.03));
-	    }
-	}
-	next if ( $opt_r );
-	if ( $opt_M ) {
-	    unless( $type =~ /fusion/i ) {
-		print join("\t", $sample, $platform, "short-variant", $gene, $status, $d->[10], $d->[$hdrs{cDNA_Change}], "$d->[1]:$d->[2]", $d->[$hdrs{Depth}], sprintf("%.2f", $d->[$afcol]*100), $d->[3], "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", $sgz), "\n";
-	    } else {
-	        my ($g1, $g2) = split(/\&/, $gene, 2);
-		$status = "likely" if ( $status eq "unknown" );
-		if ( $d->[$hdrs{cDNA_Change}] && $d->[$hdrs{cDNA_Change}] =~ /(\d+)_(\d+)/ ) {
-		    ($g1, $g2) = ($g2, $g1) if ( $1 > $2 );
-		}
-		print join("\t", $sample, $platform, "rearrangement", $g1, $status, "$g1-$g2", $d->[$hdrs{cDNA_Change}], "$d->[1]:$d->[2]", $d->[$hdrs{Depth}], sprintf("%.2f", $d->[$afcol]*100), $d->[3], "-", "-", "-", $g1, $g2, "fusion", "-", "$d->[1]:$d->[1]", "$d->[1]:$d->[$endcol]", "-", $sgz), "\n";
-	    }
-	} else {
-	    print join("\t", @$d, $status, $sgz), "\n";
-	}
+        my $gene = $d->[$genecol];
+        if ( $opt_R && $status ne "known" && $d->[$hdrs{ Pcnt_sample }] >= $MAXRATE && $d->[$hdrs{ N_Var }] >= $MINCOMSAMPLE ) {
+            if ( $opt_r ) {
+                #print "$_\t$status\n";
+                print join("\t", $sample, $platform, "short-variant", $gene, $status, $d->[10], $d->[$hdrs{cDNA_Change}], "$d->[1]:$d->[2]", $d->[$hdrs{Depth}], sprintf("%.2f", $d->[$afcol]*100), $d->[3], "-", "-", "-", "-", "-", "-", "-", "-", "-", "-"), "\n";
+                #print $statuscol ? "\t$a[$statuscol]\n" : "\n";
+            } else {
+                next if ( $status eq "unknown" );
+                #next unless( $d->[$afcol]  > 0.25 && ($d->[$afcol] > 10*$d->[$hdrs{ Ave_AF }] || $d->[$afcol] > 0.4));
+                next unless( $d->[$afcol] > 0.25 || (($d->[$afcol] > 5*$d->[$hdrs{ Ave_AF }]) && $d->[$afcol] > 0.03));
+            }
+        }
+        next if ( $opt_r );
+        if ( $opt_M ) {
+            unless( $type =~ /fusion/i ) {
+                print join("\t", $sample, $platform, "short-variant", $gene, $status, $d->[10], $d->[$hdrs{cDNA_Change}], "$d->[1]:$d->[2]", $d->[$hdrs{Depth}], sprintf("%.2f", $d->[$afcol]*100), $d->[3], "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", $sgz), "\n";
+            } else {
+                my ($g1, $g2) = split(/\&/, $gene, 2);
+                $status = "likely" if ( $status eq "unknown" );
+                if ( $d->[$hdrs{cDNA_Change}] && $d->[$hdrs{cDNA_Change}] =~ /(\d+)_(\d+)/ ) {
+                    ($g1, $g2) = ($g2, $g1) if ( $1 > $2 );
+                }
+                print join("\t", $sample, $platform, "rearrangement", $g1, $status, "$g1-$g2", $d->[$hdrs{cDNA_Change}], "$d->[1]:$d->[2]", $d->[$hdrs{Depth}], sprintf("%.2f", $d->[$afcol]*100), $d->[3], "-", "-", "-", $g1, $g2, "fusion", "-", "$d->[1]:$d->[1]", "$d->[1]:$d->[$endcol]", "-", $sgz), "\n";
+            }
+        } else {
+            print join("\t", @$d, $status, $sgz), "\n";
+        }
     }
 }
 
@@ -685,13 +685,13 @@ sub filterRule {
     return 0 unless( $filter_rules{ $gene } );
     if ( $filter_rules{ $gene }->{ ignore } ) {
         foreach my $r (@{ $filter_rules{ $gene }->{ ignore } } ) {
-	    return 1 if ( $chr eq $r->[0] && $pos >= $r->[1] && $pos <= $r->[2] );
-	}
+            return 1 if ( $chr eq $r->[0] && $pos >= $r->[1] && $pos <= $r->[2] );
+        }
     }
     if ( $filter_rules{ $gene }->{ highAF } ) {
         foreach my $r (@{ $filter_rules{ $gene }->{ highAF } } ) {
-	    return 1 if ( $chr eq $r->[0] && $pos >= $r->[1] && $pos <= $r->[2] && $af && $af < $r->[3] );
-	}
+            return 1 if ( $chr eq $r->[0] && $pos >= $r->[1] && $pos <= $r->[2] && $af && $af < $r->[3] );
+        }
     }
     return 0;
 }
@@ -704,59 +704,59 @@ sub isActionable {
     #return $act_germ{ $key } if ($act_germ{ $key } && $af >= 0.15); # actionable germline need higher af
     return "germline" if ($act_germ{ $key } && $af >= 0.15); # actionable germline need higher af
     if ( length($ref) == 1 && length($ref) == length($alt) ) {
-	#return $act_som{ "$chr-$pos-$ref" } if ( $act_som{ "$chr-$pos-$ref" } );
-	return "somatic" if ( $act_som{ "$chr-$pos-$ref" } );
+        #return $act_som{ "$chr-$pos-$ref" } if ( $act_som{ "$chr-$pos-$ref" } );
+        return "somatic" if ( $act_som{ "$chr-$pos-$ref" } );
     }
     if ( $act_hot{ "$gene-$aachg" } && $aachg =~ /^([A-Z]\d+)[A-Z?]$/ ) {
-	if ( $act_hot{ "$gene-$aachg" } eq "somatic" ) {
-	    return "somatic" if ( $af >= $ACTMINAF );
-	} elsif ( $act_hot{ "$gene-$aachg" } eq "germline" ) {
-	    return "germline" if ( $af >= 0.15 );
-	}
+        if ( $act_hot{ "$gene-$aachg" } eq "somatic" ) {
+            return "somatic" if ( $af >= $ACTMINAF );
+        } elsif ( $act_hot{ "$gene-$aachg" } eq "germline" ) {
+            return "germline" if ( $af >= 0.15 );
+        }
     }
     if ( $aachg =~ /^([A-Z]\d+)[A-Z]$/ || $aachg =~ /^(M1)\?$/ ) {
-	#return $act_hot{ "$gene-$1" } if ( $act_hot{ "$gene-$1" } );
-	return "somatic" if ( $act_hot{ "$gene-$1" } );
+        #return $act_hot{ "$gene-$1" } if ( $act_hot{ "$gene-$1" } );
+        return "somatic" if ( $act_hot{ "$gene-$1" } );
     }
     if ( $gene eq "TP53" ) {
         my $tp53_group = classify_tp53($aachg, $pos, $ref, $alt);
-	return "somatic" unless( $tp53_group eq "NA" );
+        return "somatic" unless( $tp53_group eq "NA" );
     }
     if ( $rules{ "inframe-del" }->{ $gene } && length($ref) > length($alt) && (length($ref)-length($alt))%3 == 0 ) {
         foreach my $r ( @{ $rules{ "inframe-del" }->{ $gene } } ) {
-	    if ( $r->[0] eq $chr && $r->[1] <= $pos+length($ref)-1 && $r->[2] >= $pos && (length($ref)-length($alt)) >= $r->[3] ) {
-		$ra->[$hdrs{Amino_Acid_Change}] = $r->[4] if ( $opt_M );
-		return "somatic"; 
-	    }
-	}
+            if ( $r->[0] eq $chr && $r->[1] <= $pos+length($ref)-1 && $r->[2] >= $pos && (length($ref)-length($alt)) >= $r->[3] ) {
+                $ra->[$hdrs{Amino_Acid_Change}] = $r->[4] if ( $opt_M );
+                return "somatic"; 
+            }
+        }
     } elsif ( $rules{ "inframe-ins" }->{ $gene } && length($ref) < length($alt) && (length($alt)-length($ref))%3 == 0 ) {
         foreach my $r ( @{ $rules{ "inframe-ins" }->{ $gene } } ) {
-	    if ( $r->[0] eq $chr && $r->[1] <= $pos+length($ref)-1 && $r->[2] >= $pos && (length($alt)-length($ref)) >= $r->[3] ) {
-		$ra->[$hdrs{Amino_Acid_Change}] = $r->[4] if ( $opt_M );
-		return "somatic";
-	    }
-	}
+            if ( $r->[0] eq $chr && $r->[1] <= $pos+length($ref)-1 && $r->[2] >= $pos && (length($alt)-length($ref)) >= $r->[3] ) {
+                $ra->[$hdrs{Amino_Acid_Change}] = $r->[4] if ( $opt_M );
+                return "somatic";
+            }
+        }
     } elsif ( $rules{ "indel" }->{ $gene } && length($ref) != length($alt) ) {
         foreach my $r ( @{ $rules{ "indel" }->{ $gene } } ) {
-	    if ( $r->[0] eq $chr && $r->[1] <= $pos+length($ref)-1 && $r->[2] >= $pos && abs(length($alt)-length($ref)) >= $r->[3]) {
-		$ra->[$hdrs{Amino_Acid_Change}] = $r->[4] if ( $opt_M );
-		return "somatic"; 
-	    }
-	}
+            if ( $r->[0] eq $chr && $r->[1] <= $pos+length($ref)-1 && $r->[2] >= $pos && abs(length($alt)-length($ref)) >= $r->[3]) {
+                $ra->[$hdrs{Amino_Acid_Change}] = $r->[4] if ( $opt_M );
+                return "somatic"; 
+            }
+        }
     } elsif ( $rules{ "del" }->{ $gene } && length($ref) > length($alt) ) {
         foreach my $r ( @{ $rules{ "del" }->{ $gene } } ) {
-	    if ( $r->[0] eq $chr && $r->[1] <= $pos+length($ref)-1 && $r->[2] >= $pos && (length($ref)-length($alt)) >= $r->[3]) {
-		$ra->[$hdrs{Amino_Acid_Change}] = $r->[4] if ( $opt_M );
-		return "somatic";
-	    }
-	}
+            if ( $r->[0] eq $chr && $r->[1] <= $pos+length($ref)-1 && $r->[2] >= $pos && (length($ref)-length($alt)) >= $r->[3]) {
+                $ra->[$hdrs{Amino_Acid_Change}] = $r->[4] if ( $opt_M );
+                return "somatic";
+            }
+        }
     } elsif ( $rules{ "ins" }->{ $gene } && length($ref) < length($alt) ) {
         foreach my $r ( @{ $rules{ "ins" }->{ $gene } } ) {
-	    if ( $r->[0] eq $chr && $r->[1] <= $pos+length($ref)-1 && $r->[2] >= $pos && (length($alt)-length($ref)) >= $r->[3]) {
-		$ra->[$hdrs{Amino_Acid_Change}] = $r->[4] if ( $opt_M );
-		return "somatic";
-	    }
-	}
+            if ( $r->[0] eq $chr && $r->[1] <= $pos+length($ref)-1 && $r->[2] >= $pos && (length($alt)-length($ref)) >= $r->[3]) {
+                $ra->[$hdrs{Amino_Acid_Change}] = $r->[4] if ( $opt_M );
+                return "somatic";
+            }
+        }
     }
     return 0;
 }
@@ -765,10 +765,10 @@ sub isHotspotNT {
     my ($chr, $pos, $ref, $alt) = @_;
     if ( length($ref) > length($alt) && $alt ne "-" ) {
         $ref = substr($ref, 1);
-	$alt = length($alt) > 1 ? substr($alt, 1) : "-";
+        $alt = length($alt) > 1 ? substr($alt, 1) : "-";
     } elsif ( length($alt) > length($ref) && $ref ne "-" ) {
         $alt = substr($alt, 1);
-	$ref = length($ref) > 1 ? substr($ref, 1) : "-";
+        $ref = length($ref) > 1 ? substr($ref, 1) : "-";
     }
     return $hotspotnt{ "$chr-$pos-$ref-$alt" } ? 1 : 0;
 }
@@ -828,15 +828,15 @@ sub checkCLNSIG {
     my $flagyes = 0;
     my $flags = 0;
     foreach my $cs (@cs) {
-	$flagyes++ if ( $cs > 3 && $cs < 7 );
-	$flagno++ if ( $cs <= 3 && $cs >= 2 );
-	$flag255++ if ( $cs == 255 || $cs < 1 );
-	$flags++ unless( $cs == 1 );  # Untested doesn't count
+        $flagyes++ if ( $cs > 3 && $cs < 7 );
+        $flagno++ if ( $cs <= 3 && $cs >= 2 );
+        $flag255++ if ( $cs == 255 || $cs < 1 );
+        $flags++ unless( $cs == 1 );  # Untested doesn't count
     }
     if ( $flagyes ) {
-	return "ClnSNP_known" if ( $flagyes > 1 );
-	return "ClnSNP_known" if ( $flagyes > 0 && $flagno == 0 );
-	$flagyes >= $flagno && $flagno <= 1 && $flagyes/$flags >= 0.5 ? (return "ClnSNP_known") : (return "ClnSNP_unknown");
+        return "ClnSNP_known" if ( $flagyes > 1 );
+        return "ClnSNP_known" if ( $flagyes > 0 && $flagno == 0 );
+        $flagyes >= $flagno && $flagno <= 1 && $flagyes/$flags >= 0.5 ? (return "ClnSNP_known") : (return "ClnSNP_unknown");
     }
     return "dbSNP" if ( $flagno > 1 && $flagno >= $flag255 );
     return "ClnSNP_unknown" if ( $flag255 ); # Keep unknown significant variants
@@ -855,14 +855,14 @@ sub USAGE {
 
     -i  Indicate to filter likely artifact of complex variants due to chimeric reads.  If there're many of them in the result,
         then set this option and they'll be filtered out.  Complex variants typically have del...ins...  These artifacts are typically
-	having <10% AF, and both inserted and deleted sequences > 20bp
+        having <10% AF, and both inserted and deleted sequences > 20bp
 
-    -S	Skip the silent mutation that are "unknown" in Status.  By default: all silent "Novel" and "COSMIC" only mutations will be kept.
+    -S        Skip the silent mutation that are "unknown" in Status.  By default: all silent "Novel" and "COSMIC" only mutations will be kept.
         Silent mutation with entries in both COSMIC and dbSNP will be filtered.
 
     -N  If set, keep all intronic and UTR in the output, but will be set as "unknown".
 
-    -B	double
+    -B        double
         If set, filter variants with significant strand bias (p-value < double). Default: 0.0001
 
     -D  int
@@ -880,13 +880,13 @@ sub USAGE {
 
     -R  double
         If a variant is present in > [double] fraction of samples, it's deemed not a mutation.  Default: 1.0, or no filtering.
-	Use with caution.  It'll filter even if it's in COSMIC, unless it's on actionable list. Don't use it if the cohort is homogeneous.
-	Use only for heterogeneous cohorts.  Used together with -s option.
+        Use with caution.  It'll filter even if it's in COSMIC, unless it's on actionable list. Don't use it if the cohort is homogeneous.
+        Use only for heterogeneous cohorts.  Used together with -s option.
 
     -s  integer
         The minimum number of samples that sharing the same variant that are not on the known list to be filtered out.  Used together
-	with -R option.  A variant has to satisfied both conditions, AND not on the knon list, to be considered too common to
-	be functional and filtered out.  Use only for heterogeneous cohorts. Default: 5
+        with -R option.  A variant has to satisfied both conditions, AND not on the knon list, to be considered too common to
+        be functional and filtered out.  Use only for heterogeneous cohorts. Default: 5
 
     -r  If set, keep only those variants satisfying -R option.  The option is meant to find what are re-occuring variants or
         artifacts.
@@ -898,10 +898,10 @@ sub USAGE {
         The platform, such as WXS, WGS, RNA-Seq, VALIDATION, etc.  No Default.  Used when output is in FM's format (-M option)
 
     -a  dirpath
-	Directory path for containing annotation files.
+        Directory path for containing annotation files.
         Default is /projects/ngs/azbifx/NGS/genomes/hg19/Annotation
-	For hg38, use /projects/ngs/azbifx/NGS/genomes/hg38/Annotation
-	If dirpath is "hg38", automatically set it to /projects/ngs/azbifx/NGS/genomes/hg38/Annotation
+        For hg38, use /projects/ngs/azbifx/NGS/genomes/hg38/Annotation
+        If dirpath is "hg38", automatically set it to /projects/ngs/azbifx/NGS/genomes/hg38/Annotation
 
     -O  Indicate to keep IO genes.  Currently defined as "HLA-*".  By default, all HLA-* genes will be filtered out.
 
@@ -916,8 +916,8 @@ sub USAGE {
 
     --FFPE double
         When the option is set, C>T or G>A variants will be filtered unless the allele frequency is higher than specified.
-	Default: Off
-	
+        Default: Off
+
     --ruledir  dirpath
         default is /projects/ngs/azbifx/NGS/Rules
 
