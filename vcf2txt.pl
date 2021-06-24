@@ -35,7 +35,7 @@ my $PRINTLOF = $opt_L;
 my @controls = $opt_c ? split(/:/, $opt_c) : ();
 my %controls = map { ($_, 1); } @controls;
 my %MultiMaf;
-$opt_A = defined($opt_A) ? $opt_A : "/ngs/reference_data/genomes/Hsapiens/hg19/variation/dbSNP_multi_mafs_latest.txt";
+$opt_A = defined($opt_A) ? $opt_A : "/projects/ngs/reference/genomes/Hsapiens/hg19/variation/dbSNP_multi_mafs_v150.txt";
 setupMultiMaf($opt_A) if ( -e $opt_A );
 
 
@@ -49,7 +49,10 @@ my @data;
 my %sample;
 my %var;
 my %CONTROL;
-while( <> ) {
+
+my $vcf = pop(@ARGV);
+$vcf =~ /gz$/ ? open (VCF, "-|", "gunzip -c " . $vcf ) : open( VCF, $vcf );
+while( <VCF> ) {
     next if ( /^#/ );
     chomp;
     my @a = split(/\t/);
@@ -236,7 +239,7 @@ while( <> ) {
                     $ins .= $AA_code{ uc(substr($5, $i, 3)) };
                 }
                 $aachg = "$AA_code{uc($1)}${2}_$AA_code{uc($3)}${4}ins$ins";
-            } elsif ( $aachg =~ /^([A-Z][a-z][a-z])(\d+)(_.*)?fs$/ ) {
+            } elsif ( $aachg =~ /^([A-Z][a-z][a-z])(\d+)(_.*)?fs$/ ) { # Cys42fs -> C42fs
                 $aachg = "$AA_code{uc($1)}${2}fs";
             } elsif ( $aachg =~ /^([A-Z][a-z][a-z])(\d+)del$/ ) {
                 $aachg = "$AA_code{uc($1)}${2}del";
@@ -288,7 +291,7 @@ while( <> ) {
             }
         }
         # Move the aa position in multiple aa changes if they're silent.  e.g. GC796GS will become C797S
-        if ( $aachg && $aachg =~ /^([A-Z]+)(\d+)([A-Z]+)$/ ) {
+        if ( $aachg && $aachg =~ /^([A-Z]+)(\d+)([A-Z]+)$/ ) { #E2E (Glu2Glue) will be TRUE in this if, but $an will be 0 
             my ($aa1, $aap, $aa2) = ($1, $2, $3);
             my $an = 0;
             $an++ while($an < length($aa1)-1 && $an < length($aa2)-1 && substr($aa1, $an, 1) eq substr($aa2, $an, 1));
@@ -317,6 +320,7 @@ while( <> ) {
         push(@data, @d2); # To ensure that outdated COSMIC gene symbols will still be captured.
     }
 }
+close(VCF);
 
 my @amphdrs = @ampcols > 0 ? qw(GAmplicons TAmplicons NCAmplicons Ampflag) : ();
 my @pairhdrs = @paircols > 0 ? qw(VType Status Paired-p_value Paired-OddRatio Matched_Depth Matched_AlleleFreq Matched_VD Matched_RD Matched_ALD Matched_Bias Matched_Pmean Matched_Pstd Matched_Qual Matched_Qstd Matched_HIAF Matched_MQ Matched_SN Matched_AdjAF Matched_NM Matched_GT Matched_DupRate Matched_SplitReads Matched_SpanPairs)  : ();
