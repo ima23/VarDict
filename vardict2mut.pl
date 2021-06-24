@@ -2,6 +2,7 @@
 
 #use Getopt::Std;
 use Getopt::Long qw(:config no_ignore_case);
+use lib '/projects/ngs/azbifx/bin';
 use Stat::Basic;
 use strict;
 
