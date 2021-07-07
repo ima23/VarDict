@@ -40,7 +40,6 @@ my $PRINTLOF = $opt_L;
 my @controls = $opt_c ? split(/:/, $opt_c) : ();
 my %controls = map { ($_, 1); } @controls;
 my %MultiMaf;
-$opt_A = defined($opt_A) ? $opt_A : "/projects/ngs/reference/genomes/Hsapiens/hg19/variation/dbSNP_multi_mafs_v150.txt";
 setupMultiMaf($opt_A) if ( -e $opt_A );
 
 
@@ -573,10 +572,10 @@ print <<USAGE;
         The mininum GMAF value.  Any variants with GMAF above this value is deemed dbSNP, regardless whether it's in COSMIC or not.  Default: 0.0025
         
     -A file
-        A file that contain GMAF when there're multiple alternative alleles.  It's not easy to be parsed from CAF as the order is not clear.
-        Thus this extra file.  Use only if you have it available.  It should contain 6 columns, such as "chr1    907920  rs28430926      C       G       0.1107",
-        where the last column is GMAF.  Default to: /ngs/reference_data/genomes/Hsapiens/hg19/variation/dbSNP_multi_mafs_latest.txt.  Use "", empty
-        string to disable it if you don't have one.  If the default file doesn't exist, it'll be disabled.
+        A file that contain GMAF when there're multiple alternative alleles. If available this will be used to classify multiallelic sites based on the GMAF value (-G). 
+        Multiallelic sites are not easy to be parsed from CAF as the order is not clear. Thus this extra file.  Use only if you have it available. 
+        It should contain 6 columns, such as "chr1    907920  rs28430926      C       G       0.1107", where the last column is GMAF, for example file dbSNP_multi_mafs_v150.txt. 
+        If the file doesn't exist, classification for multiallelic sites will be disabled.
 
     A novel variant (non-dbSNP, non-COSMIC) is considered false positive if all three conditions (-r -F -n) are met. Any variant meeting the -p
     or -q conditions are also considered likely false positive.  False positive variants are annotated "FALSE" in column PASS, "TRUE" otherwise.
