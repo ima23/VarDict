@@ -26,13 +26,16 @@ my $MAXRATIO = $opt_R ? $opt_R : 1.0;
 my $CNT = $opt_n ? $opt_n : 10;
 my $AVEFREQ = $opt_F ? $opt_F : 0.15;
 my $MINPMEAN = $opt_p ? $opt_p : 5;
-my $MINQMEAN = $opt_q ? $opt_q : 22.5;
-my $FILPMEAN = $opt_P ? $opt_P : 0; # will be filtered on the first place
-my $FILQMEAN = $opt_Q ? $opt_Q : 0; # will be filtered on the first place
-my $FILDEPTH = $opt_D ? $opt_D : 0; # will be filtered on the first place
+my $MINQMEAN = $opt_q ? $opt_q : 23;
+my $FILPMEAN = $opt_P ? $opt_P : 0; # will be filtered on the first pass, unless $opt_a was selected
+my $FILQMEAN = $opt_Q ? $opt_Q : 0; # will be filtered on the first pass, unless $opt_a was selected
+my $FILDEPTH = $opt_D ? $opt_D : 3; # will be filtered on the first pass, unless $opt_a was selected
 my $MINFREQ = $opt_f ? $opt_f : 0.02;
 my $MINMQ = $opt_M ? $opt_M : 10;
-my $MINVD = $opt_V ? $opt_V : 2; # minimum variant depth
+my $MINMQAF = 0.5;          # the minimum MQ allele frequency used to allow low quality high frequency variants to PASS
+my $MINDUPAF = 0.35;        # the minimum allele frequency required for a duplication to have PASS status
+my $MINBIASAF = 0.3;        # the minimum allele frequency required for PASS if Bias is 2:1 or 2:0
+my $MINVD = $opt_V ? $opt_V : 3; # minimum variant depth
 my $MAF = $opt_G ? $opt_G : 0.0025;
 my $SN = $opt_o ? $opt_o : 1.5;
 my $UTR = $opt_U ? $opt_U : 300;
@@ -185,9 +188,9 @@ while( <VCF> ) {
         @effs = (" (||||||||||1)");
     }
     my $vark = join(":", @a[0,1,3,4]); # Chr Pos Ref Alt
-    next if ( $FILDEPTH && $d{ DP } < $FILDEPTH );
-    next if ( $FILPMEAN && $d{ PMEAN } && $d{ PMEAN } < $FILPMEAN );
-    next if ( $FILQMEAN && $d{ QUAL } && $d{ QUAL } < $FILQMEAN );
+    next if ( $FILDEPTH && $d{ DP } < $FILDEPTH  && !$opt_a );
+    next if ( $FILPMEAN && $d{ PMEAN } && $d{ PMEAN } < $FILPMEAN && !$opt_a );
+    next if ( $FILQMEAN && $d{ QUAL } && $d{ QUAL } < $FILQMEAN && !$opt_a );
     my ($pmean, $qmean) = ($d{ PMEAN }, $d{ QUAL });
     my ($m_pmean, $m_qmean) = ($d{ M_PMEAN }, $d{ M_QUAL });
     my $pass = "TRUE";
@@ -199,8 +202,8 @@ while( <VCF> ) {
     $mpass = "FALSE" if ( $m_pmean && $m_pmean < $MINPMEAN );
     $pass = "FALSE" if ( !$d{AF} || $d{AF} < $MINFREQ );
     $mpass = "FALSE" if ( $d{M_AF} && $d{M_AF} < $MINFREQ );
-    $pass = "FALSE" if ( $d{MQ} && $d{MQ} < $MINMQ && $d{AF} < 0.5 );  # Keep low mapping quality but high allele frequency variants
-    $mpass = "FALSE" if ( $d{M_MQ} && $d{M_MQ} < $MINMQ && $d{M_AF} < 0.5 );  # Keep low mapping quality but high allele frequency variants
+    $pass = "FALSE" if ( $d{MQ} && $d{MQ} < $MINMQ && $d{AF} < $MINMQAF );  # Keep low mapping quality but high allele frequency variants
+    $mpass = "FALSE" if ( $d{M_MQ} && $d{M_MQ} < $MINMQ && $d{M_AF} < $MINMQAF );  # Keep low mapping quality but high allele frequency variants
     $pass = "FALSE" if ( $d{SN} && $d{SN} < $SN );
     $mpass = "FALSE" if ( $d{M_SN} && $d{M_SN} < $SN );
     $pass = "FALSE" if ( !$d{VD} || $d{VD} < $MINVD );
@@ -214,7 +217,7 @@ while( <VCF> ) {
     }
     unless( $opt_u && $d{ SAMPLE } =~ /Undetermined/i ) { # Undetermined won't count toward samples
         $sample{ $d{ SAMPLE } } = 1;
-        push( @{ $var{ $vark } }, $d{ AF } ) if ( $pass eq "TRUE" || $mpass eq "TRUE" );
+        push( @{ $var{ $vark } }, $d{ AF } ) if ( $pass eq "TRUE" || $mpass eq "TRUE" || $opt_a);
     }
     my @alts = split(/,/, $a[4]);
     my @d1 = ();
@@ -353,14 +356,14 @@ foreach my $d (@data) {
     my $clncheck = checkCLNSIG($d->[$HDRN{ CLNSIG }]);
     my $class = $d->[3] =~ /COSM/ ? "COSMIC" : ($d->[3] =~ /^rs/ ? ($clncheck ? $clncheck : "dbSNP") : "Novel");
     #$pass = "FALSE" unless ( $d->[24] > 0 ); # all variants from one position in reads
-    $pass = "DUP" if ( $pmean && $d->[$HDRN{ Pstd }] == 0 && $d->[$HDRN{ Bias }] !~ /1$/ && $d->[$HDRN{ Bias }] !~ /0$/ && (@amphdrs == 0) && $af < 0.35 ); # all variants from one position in reads
-    $mpass = "DUP" if ( $m_pmean && $d->[$HDRN{ Matched_Pstd }] == 0 && $d->[$HDRN{ Matched_Bias }] !~ /1$/ && $d->[$HDRN{ Matched_Bias }] !~ /0$/ && (@amphdrs == 0) && $m_af < 0.35 ); # all variants from one position in reads
+    $pass = "DUP" if ( $pmean && $d->[$HDRN{ Pstd }] == 0 && $d->[$HDRN{ Bias }] !~ /1$/ && $d->[$HDRN{ Bias }] !~ /0$/ && (@amphdrs == 0) && $af < $MINDUPAF ); # all variants from one position in reads
+    $mpass = "DUP" if ( $m_pmean && $d->[$HDRN{ Matched_Pstd }] == 0 && $d->[$HDRN{ Matched_Bias }] !~ /1$/ && $d->[$HDRN{ Matched_Bias }] !~ /0$/ && (@amphdrs == 0) && $m_af < $MINDUPAF ); # all variants from one position in reads
     $pass = "QMEAN" if (length($qmean) > 0 && $qmean < $MINQMEAN );
     $mpass = "QMEAN" if ($m_qmean && length($m_qmean) > 0 && $m_qmean < $MINQMEAN );
     $pass = "PMEAN" if ($pmean && $pmean < $MINPMEAN );
     $mpass = "PMEAN" if ($m_pmean && $m_pmean < $MINPMEAN );
-    $pass = "MQ" if ( length($mq) > 0 && $mq < $MINMQ && $af < 0.5 ); # Keep low mapping quality but high allele frequency variants
-    $mpass = "MQ" if ( $m_mq && length($m_mq) > 0 && $m_mq < $MINMQ && $m_af < 0.5 ); # Keep low mapping quality but high allele frequency variants
+    $pass = "MQ" if ( length($mq) > 0 && $mq < $MINMQ && $af < $MINMQAF ); # Keep low mapping quality but high allele frequency variants
+    $mpass = "MQ" if ( $m_mq && length($m_mq) > 0 && $m_mq < $MINMQ && $m_af < $MINMQAF ); # Keep low mapping quality but high allele frequency variants
     $pass = "SN" if ( length($sn) > 0 && $sn < $SN );
     $mpass = "SN" if ( $m_sn && length($m_sn) > 0 && $m_sn < $SN );
     $pass = "MINFREQ" if ( $af < $MINFREQ );
@@ -402,7 +405,7 @@ foreach my $d (@data) {
         }
     }
     $pass = "CNTL" if ( $CONTROL{ $vark } );
-    $pass = "BIAS" if ( $opt_b && ($class eq "Novel"||$class eq "dbSNP") && ($d->[$HDRN{ Bias }] eq "2;1" || $d->[$HDRN{ Bias }] eq "2;0") && $d->[$HDRN{ AlleleFreq }] < 0.3 ); # Filter novel variants with strand bias.
+    $pass = "BIAS" if ( $opt_b && ($class eq "Novel"||$class eq "dbSNP") && ($d->[$HDRN{ Bias }] eq "2;1" || $d->[$HDRN{ Bias }] eq "2;0") && $d->[$HDRN{ AlleleFreq }] < $MINBIASAF); # Filter novel variants with strand bias.
     if ( $clncheck eq "dbSNP" && $class ne "COSMIC" && $class ne "dbSNP_del" ) {
         $class = "dbSNP"; 
     }
@@ -517,7 +520,7 @@ print <<USAGE;
         Used with -F and -n
     
     -F DOUBLE
-        When the ave allele frequency is also below -F, the variant is considered likely false positive.  Default 0.15.
+        When the average allele frequency is also below -F, the variant is considered likely false positive.  Default 0.15.
         Used with -r and -n
 
     -n INT
@@ -537,7 +540,7 @@ print <<USAGE;
         The minimum mean position in reads for variants.  Default: 5bp
 
     -q DOUBLE
-        The minimum mean base quality phred score for variants.  Default: 22.5
+        The minimum mean base quality phred score for variants.  Default: 23
 
     -P INT
         The filtering mean position in reads for variants.  The raw variant will be filtered on first place if the mean 
@@ -548,15 +551,15 @@ print <<USAGE;
         if the mean quality is less then DOUBLE.  Default: 0
 
     -M DOUBLE
-        The filtering mean mapping quality score for variants.  The raw variant will be filtered if the mean mapping quality score is less then 
-        specified unless the allele frequency is greater than 0.8.
+        The filtering mean mapping quality score for variants.  The raw variant will be filtered if the mean mapping quality score is less then the one 
+        specified unless the allele frequency is greater than 0.5.
         Default: 10
 
     -D INT
-        The filtering total depth.  The raw variant will be filtered on first place if the total depth is less then INT.  Default: 0
+        The filtering total depth.  The raw variant will be filtered on first place if the total depth is less then INT.  Default: 3
 
     -V INT
-        The filtering variant depth.  Variants with depth < INT will be considered false positive.  Default: 2, or at least 2 reads are needed for a variant
+        The filtering variant depth.  Variants with depth < INT will be considered false positive.  Default: 3, or at least 3 reads are needed for a variant
 
     -o signal
         The signal/noise value.  Default: 1.5 
