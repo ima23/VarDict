@@ -420,7 +420,7 @@ foreach my $d (@data) {
         }
     }
     $pass = "CNTL" if ( $CONTROL{ $vark } );
-    $pass = "BIAS" if ( $opt_b && ($class eq "Novel"||$class eq "dbSNP") && ($d->[$HDRN{ Bias }] eq "2;1" || $d->[$HDRN{ Bias }] eq "2;0") && $d->[$HDRN{ AlleleFreq }] < $MINBIASAF); # Filter novel variants with strand bias.
+    $pass = "BIAS" if ( $opt_b && ($class eq "Novel"||$class eq "dbSNP") && ($d->[$HDRN{ Bias }] eq "2:1" || $d->[$HDRN{ Bias }] eq "2:0") && $d->[$HDRN{ AlleleFreq }] < $MINBIASAF); # Filter novel variants with strand bias.
     if ( $clncheck eq "dbSNP" && $class ne "COSMIC" && $class ne "dbSNP_del" ) {
         $class = "dbSNP"; 
     }
