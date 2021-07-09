@@ -30,15 +30,17 @@ my $MINQMEAN = $opt_q ? $opt_q : 23;
 my $FILPMEAN = $opt_P ? $opt_P : 0; # will be filtered on the first pass, unless $opt_a was selected
 my $FILQMEAN = $opt_Q ? $opt_Q : 0; # will be filtered on the first pass, unless $opt_a was selected
 my $FILDEPTH = $opt_D ? $opt_D : 3; # will be filtered on the first pass, unless $opt_a was selected
-my $MINFREQ = $opt_f ? $opt_f : 0;
+my $MINFREQ = $opt_f ? $opt_f : 0.0005;
 my $MINMQ = $opt_M ? $opt_M : 10;
 my $MINMQAF = 0.5;          # the minimum MQ allele frequency used to allow low quality high frequency variants to PASS
 my $MINDUPAF = 0.35;        # the minimum allele frequency required for a duplication to have PASS status
+my $MINMAXRATEAF = 0.35;    # the minimum allele frequency required for having PASS status
 my $MINBIASAF = 0.3;        # the minimum allele frequency required for PASS if Bias is 2:1 or 2:0
 my $MINVD = $opt_V ? $opt_V : 3; # minimum variant depth
 my $MAF = $opt_G ? $opt_G : 0.0025;
 my $SN = $opt_o ? $opt_o : 1.5;
 my $UTR = $opt_U ? $opt_U : 300; #option use is commented out in the code
+my $VARCLASS_FS = 0.95;
 my $PRINTLOF = $opt_L;
 my @controls = $opt_c ? split(/:/, $opt_c) : ();
 my %controls = map { ($_, 1); } @controls;
@@ -386,7 +388,7 @@ foreach my $d (@data) {
     # Rescue deleterious dbSNP, such as rs80357372 (BRCA1 Q139* that is in dbSNP, but not in ClnSNP or COSMIC
     if ( ($d->[6] =~ /STOP_GAINED/i || $d->[6] =~ /FRAME_?SHIFT/i) && $class eq "dbSNP" ) {
         my $pos = $1 if ( $d->[10] =~ /(\d+)/ );
-        $class = "dbSNP_del" if ( $pos/$d->[12] < 0.95 );
+        $class = "dbSNP_del" if ( $pos/$d->[12] < $VARCLASS_FS );
     }
 
     # Consider splice variants deleterious
@@ -424,10 +426,10 @@ foreach my $d (@data) {
     }
     $pass = "AMPBIAS" if ( @amphdrs > 0 && $d->[$HDRN{ GAmplicons }] && $d->[$HDRN{ GAmplicons }] < $d->[$HDRN{ TAmplicons }] );
     if ( $opt_R && $pass eq "TRUE" && $varn/$sam_n > $MAXRATIO && $varn > $CNT ) { # present in $MAXRATIO samples, regardless of frequency
-        if ( max( $var{ $vark } ) > 0.35 ) { 
+        if ( max( $var{ $vark } ) > $MINMAXRATEAF ) { 
             $class = "dbSNP";
         } else {
-            $pass = "MAXRATE" if ( $af < 0.35 );
+            $pass = "MAXRATE" if ( $af < $MINMAXRATEAF );
         }
     }
     my $lof = pop(@$d);
@@ -543,11 +545,11 @@ print <<USAGE;
     -R DOUBLE
         When a passing variant is present in more than [fraction] of samples and at least -n samples , it's considered as 
         dbSNP, even if it's in COSMIC or apparent deleterious. Default 1.0. or no filtering.  Use with caution.  Don't use it for homogeneous 
-        samples.  Use only for hetereogeneous samples, such as 0.5, or any variants present in 50% of samples are considered
+        samples.  Use only for hetereogeneous samples, such as 0.5, or any variants present in 35% of samples are considered
         as dbSNP.
 
     -f DOUBLE
-        When individual allele frequency < -f for variants, it was considered likely false poitives. Default: 0 (past values were 0.02 or 2%)
+        When individual allele frequency < -f for variants, it was considered likely false poitives. Default: 0.05% (past values were 0.02 or 2%)
 
     -p INT
         The minimum mean position in reads for variants.  Default: 5bp
