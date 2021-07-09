@@ -21,7 +21,7 @@ my %AA_code = (
 );
 
 USAGE() if ( $opt_H );
-my $FRACTION = $opt_r ? $opt_r : 0.4;
+my $FRACTION = $opt_r ? $opt_r : 1.0;
 my $MAXRATIO = $opt_R ? $opt_R : 1.0;
 my $CNT = $opt_n ? $opt_n : 10;
 my $AVEFREQ = $opt_F ? $opt_F : 0.15;
@@ -30,7 +30,7 @@ my $MINQMEAN = $opt_q ? $opt_q : 23;
 my $FILPMEAN = $opt_P ? $opt_P : 0; # will be filtered on the first pass, unless $opt_a was selected
 my $FILQMEAN = $opt_Q ? $opt_Q : 0; # will be filtered on the first pass, unless $opt_a was selected
 my $FILDEPTH = $opt_D ? $opt_D : 3; # will be filtered on the first pass, unless $opt_a was selected
-my $MINFREQ = $opt_f ? $opt_f : 0.02;
+my $MINFREQ = $opt_f ? $opt_f : 0;
 my $MINMQ = $opt_M ? $opt_M : 10;
 my $MINMQAF = 0.5;          # the minimum MQ allele frequency used to allow low quality high frequency variants to PASS
 my $MINDUPAF = 0.35;        # the minimum allele frequency required for a duplication to have PASS status
@@ -221,7 +221,7 @@ while( <VCF> ) {
     $d{ SAMPLE } = $opt_N if( $opt_N ); # overwrite sample name if set
     if ( $d{ SAMPLE } && $controls{ $d{ SAMPLE } } ) {
         my $clncheck = checkCLNSIG($d{CLNSIG});
-        my $class = $a[2] =~ /COSM/ ? "COSMIC" : ($a[2] =~ /^rs/ ? ($clncheck ? $clncheck : "dbSNP") : "Novel");
+        my $class = $a[2] =~ /COSM|COSV/ ? "COSMIC" : ($a[2] =~ /^rs/ ? ($clncheck ? $clncheck : "dbSNP") : "Novel");
         $CONTROL{ $vark } = 1 if ( $pass eq "TRUE" && $class eq "Novel");  # so that any novel variants showed up in control won't be filtered
     }
     unless( $opt_u && $d{ SAMPLE } =~ /Undetermined/i ) { # Undetermined won't count toward samples
@@ -529,7 +529,7 @@ print <<USAGE;
         Will use the argument as the sample name
     -r DOUBLE
         When a novel variant is present in more than [fraction] of samples and mean allele frequency is less than -F, it's 
-        considered as likely false positive. Default 0.4.
+        considered as likely false positive. Default 0 (past value was 0.4).
         Used with -F and -n
     
     -F DOUBLE
@@ -547,7 +547,7 @@ print <<USAGE;
         as dbSNP.
 
     -f DOUBLE
-        When individual allele frequency < -f for variants, it was considered likely false poitives. Default: 0.02 or 2%
+        When individual allele frequency < -f for variants, it was considered likely false poitives. Default: 0 (past values were 0.02 or 2%)
 
     -p INT
         The minimum mean position in reads for variants.  Default: 5bp
