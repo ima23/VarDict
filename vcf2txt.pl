@@ -38,7 +38,7 @@ my $MINBIASAF = 0.3;        # the minimum allele frequency required for PASS if 
 my $MINVD = $opt_V ? $opt_V : 3; # minimum variant depth
 my $MAF = $opt_G ? $opt_G : 0.0025;
 my $SN = $opt_o ? $opt_o : 1.5;
-my $UTR = $opt_U ? $opt_U : 300;
+my $UTR = $opt_U ? $opt_U : 300; #option use is commented out in the code
 my $PRINTLOF = $opt_L;
 my @controls = $opt_c ? split(/:/, $opt_c) : ();
 my %controls = map { ($_, 1); } @controls;
@@ -52,9 +52,9 @@ my @ampcols = ();
 my @paircols = ();
 my @appcols = $opt_C ? split(/:/, $opt_C) : ();
 push(@columns, @appcols) if ($opt_C);
-my @data;
-my %sample;
-my %var;
+my @data;   # array of arrays, each array represents one row in the final txt format
+my %sample; # key sample id and values are all 1
+my %var;    # key chr:pos:ref:alt and value is array of AFs (one from each sample)
 my %CONTROL;
 
 my $vcf = pop(@ARGV);
@@ -67,13 +67,18 @@ while( <VCF> ) {
     unless( $opt_a ) {
         next unless( $a[6] eq "PASS" );
     }
+
+    # parse INFO field
     $a[7] .= ";";
     my %d;
     while( $a[7] =~ /([^=;]+)=([^=]+?);/g ) {
         $d{ $1 } = $2;
     }
+
     $d{ GENE } && $d{ GENE } =~ s/_EN.*//;
     @ampcols = qw(GDAMP TLAMP NCAMP AMPFLAG) if ( $d{GDAMP} && $d{TLAMP} );
+
+    # parse sample specific format data (GT-genotype ,DP-total depth, VD-variant depth, AD-Allelic depths ref/alt, etc.)
     my @formats = $a[8] ? split(/:/, $a[8]) : ();
     my @fdata = $a[9] ? split(/:/, $a[9]) : ();
     my @mfdata = $a[10] ? split(/:/, $a[10]) : ();
@@ -81,6 +86,7 @@ while( <VCF> ) {
         $d{ $formats[$i] } = $fdata[$i];
         $d{ "M_$formats[$i]" } = $mfdata[$i] if ( $a[10] );
     }
+    # RD: Reference forward,reverse reads
     if ( $d{ RD } ) {
         $d{ RD } =~ /(\d+),(\d+)/ && ($d{ RD } = $1 + $2);
         $d{ M_RD } && $d{ M_RD } =~ /(\d+),(\d+)/ && ($d{ M_RD } = $1 + $2);
@@ -151,11 +157,14 @@ while( <VCF> ) {
         foreach my $Ann (@anns) { 
             my ($allele, $ann, $impact, $gname, $gid, $ftype, $fid, $biotype, $rank, $hgvsc, $hgvsp, $cdnap, $cdsp, $protp, $dist) = split(/\|/, $Ann);
             next if ( $ftype eq "interaction" || $biotype eq "pseudogene" );
+
+            #When multiple effect annotations are present pick only one
             my @ta = split(/&/, $ann);
             $ann = $ta[0];
             $ann = $ta[1] if ( $ann =~ /splice_region/i && $ta[1] && $ta[1] !~ /intron_/i );
             #next if ( $ann =~ /intergenic/i || $ann =~ /non_coding_exon_variant/i || $ann =~ /sequence_feature/ || $ann =~ /TF_binding_site_variant/ );
             next if ( $ann =~ /sequence_feature/ || $ann =~ /TF_binding_site_variant/ );
+
             $protp = $1 if ( $protp =~ /\d+\/(\d+)/ );
             if ( $ann =~ /stream/i ) {
                 #if ( $hgvsc && $hgvsc =~ /^[cn]\.\*(\d+)/ && $1 > $UTR ) {
@@ -230,6 +239,8 @@ while( <VCF> ) {
         my ($type, $effect) = split(/\(/, $e[0]);
         #next if ( $type =~ /downstream/i || $type =~ /upstream/i || $type =~ /intergenic/i || $type =~ /non_coding_exon_variant/i );
         my @tmp = map { defined($d{ $_ }) ? $d{ $_ } : ""; } (@columns, @ampcols, @paircols);
+
+        # Change three letter code to one
         my ($aachg, $cdnachg) = $e[3] ? split("/", $e[3]) : ("", "");
         ($aachg, $cdnachg) = ("", $e[3]) if ( $e[3] =~ /^[cn]/ );
         if ( $aachg && $aachg =~ /^p\./ && (! $opt_s )) {
@@ -294,7 +305,7 @@ while( <VCF> ) {
             } elsif ( $aachg =~ /^Ter(\d+)([A-Z][a-z][a-z])ext\*\?$/ ) {
                 $aachg = "*$1$AA_code{uc($2)}ext*?";
             } else {
-                print STDERR "New format: $aachg AF: $d{AF}\n";
+                print STDERR "New aachg format: $aachg, AF: $d{AF}\n";
             }
         }
         # Move the aa position in multiple aa changes if they're silent.  e.g. GC796GS will become C797S
@@ -309,7 +320,7 @@ while( <VCF> ) {
                 $aachg = "$aa1$aap$aa2";
             }
         }
-        my @tmp2= map { defined($_) ? $_ : ""; } (@e[1, 2], $aachg, $cdnachg, @e[4..9]);
+        my @tmp2= map { defined($_) ? $_ : ""; } (@e[1, 2], $aachg, $cdnachg, @e[4..9]); # use empty string for undefined values
         my $alt = $e[10];
         if ( $alt =~ /^\d+$/ ) {
             $alt = $alts[$alt-1];
@@ -343,6 +354,7 @@ for(my $i = 0; $i < @HDRS; $i++) {
 
 my @samples = keys %sample;
 my $sam_n = @samples + 0;
+
 foreach my $d (@data) {
     my $vark = join(":", @$d[1, 2, 4, 5]); # Chr Pos Ref Alt
     next unless( $var{ $vark } ); # Likely just in Undetermined.
@@ -383,6 +395,7 @@ foreach my $d (@data) {
     }
 
 
+    # Consider common variants (GMAF > MAF-threshold) of class dbSNP 
     if ( $d->[$HDRN{ GMAF }] ) {  # GMAF
         $d->[$HDRN{ GMAF }] =~ s/^\[//; $d->[$HDRN{ GMAF }] = (split /\]/, $d->[$HDRN{ GMAF }])[0];
         my @mafs = split(/,/, $d->[$HDRN{ GMAF }]);
