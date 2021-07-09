@@ -2,9 +2,13 @@
 
 #use Getopt::Std;
 use Getopt::Long qw(:config no_ignore_case);
-use lib '/projects/ngs/azbifx/bin';
 use Stat::Basic;
 use strict;
+
+if (@ARGV < 1) {
+    USAGE();
+    exit 0;
+}
 
 our ($opt_n, $opt_f, $opt_F, $opt_H, $opt_D, $opt_V, $opt_M, $opt_R, $opt_p, $opt_N, $opt_r, $opt_a, $opt_s, $opt_S, $opt_O, $opt_y, $opt_B, $opt_i);
 
