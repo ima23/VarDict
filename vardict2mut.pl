@@ -440,14 +440,10 @@ while( <> ) {
     # Filter low AF MSI
     my $msi = $a[$msicol];
     if ( abs(length($a[4])-length($a[5])) >= 1 && abs(length($a[4])-length($a[5])) <= 3 && $msi > 1 ) {  
-        if ( $msi <= 3 ) {
-            next if ( $af < 0.005 );
-        } elsif ( $msi <= 4 ) {
-            next if ( $af < 0.008 );
-        } elsif ( $msi <= 7 ) {
-            next if ( $af < 0.02 );
+        if ( $msi <= 7 ) {
+            next if ( $af < 0.03 );
         } elsif ( $msi == 8 ) {
-            next if ( $af < 0.04 );
+            next if ( $af < 0.06 );
         } elsif ( $msi == 9 ) {
             next if ( $af < 0.125 );
         } elsif ( $msi == 10 ) {
