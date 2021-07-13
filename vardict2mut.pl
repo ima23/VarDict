@@ -3,6 +3,7 @@
 #use Getopt::Std;
 use Getopt::Long qw(:config no_ignore_case);
 use Stat::Basic;
+use Cwd;
 use strict;
 
 if (@ARGV < 1) {
@@ -12,17 +13,8 @@ if (@ARGV < 1) {
 
 our ($opt_n, $opt_f, $opt_F, $opt_H, $opt_D, $opt_V, $opt_M, $opt_R, $opt_p, $opt_N, $opt_r, $opt_a, $opt_s, $opt_S, $opt_O, $opt_y, $opt_B, $opt_i);
 
-my $ruledir = "/projects/ngs/azbifx/NGS/Rules";
-my $annotation_dir = '/projects/ngs/azbifx/NGS/genomes/hg19/Annotation';  # "/ngs/reference_data/genomes/Hsapiens/hg19/variation/cancer_informatics";
-my $filter_common_snp = "$annotation_dir/filter_common_snp.txt";
-my $snpeffect_export_polymorphic = "$annotation_dir/snpeffect_export_Polymorphic.txt";
-my $filter_common_artifacts = "$annotation_dir/filter_common_artifacts.txt";
-my $actionable_hotspot = "$annotation_dir/actionable_hotspot.txt";
-my $actionable = "$annotation_dir/actionable.txt";
-my $compendia_ms7_hotspot = "$annotation_dir/Compendia.MS7.Hotspot.txt";
-my $SPLICE = "$annotation_dir/SPLICE.txt";
-my $LASTAA = "$annotation_dir/last_critical_aa.txt";
-my $blackgenes = "$annotation_dir/blackgenes.txt";
+my ($ruledir, $annotdir, $filter_common_snp, $snpeffect_export_polymorphic, $filter_common_artifacts, $actionable_hotspot, $actionable);
+my ($compendia_ms7_hotspot, $splice, $blackgenes, $lastaa); 
 my $GMAF = 0.0025;
 my $recalfreq = '';
 my $FFPE;
@@ -55,33 +47,54 @@ GetOptions ("n=s" => \$opt_n,
             "FFPE=f" => \$FFPE,
             "GMAF=f" => \$GMAF,
             "ruledir=s" => \$ruledir,
-            "annotdir=s" => \$opt_a,
+            "annotdir=s" => \$annotdir,
             "filter_common_snp=s" => \$filter_common_snp,
             "snpeffect_export_polymorphic=s" => \$snpeffect_export_polymorphic,
             "filter_common_artifacts=s" => \$filter_common_artifacts,
             "actionable_hotspot=s" => \$actionable_hotspot,
             "actionable=s" => \$actionable,
-            "lastaa=s" => \$LASTAA,
+            "lastaa=s" => \$lastaa,
             "cosmic_cnt=i" => \$COSM_CNT,
+            "splice=s" => \$splice,
             "blackgenes=s" => \$blackgenes,
             "compendia_ms7_hotspot=s" => \$compendia_ms7_hotspot) or USAGE();
-if ( $opt_a ) {
-    $annotation_dir = $opt_a eq "hg38" ? "/projects/ngs/azbifx/NGS/genomes/hg38/Annotation" : $opt_a;
-    $filter_common_snp = "$annotation_dir/filter_common_snp.txt";
-    $snpeffect_export_polymorphic = "$annotation_dir/snpeffect_export_Polymorphic.txt";
-    $filter_common_artifacts = "$annotation_dir/filter_common_artifacts.txt";
-    $actionable_hotspot = "$annotation_dir/actionable_hotspot.txt";
-    $actionable = "$annotation_dir/actionable.txt";
-    $compendia_ms7_hotspot = "$annotation_dir/Compendia.MS7.Hotspot.txt";
-    $SPLICE = "$annotation_dir/SPLICE.txt";
-    $LASTAA = "$annotation_dir/last_critical_aa.txt";
-    $blackgenes = "$annotation_dir/blackgenes.txt";
-}
 
 #getopts( 'HMn:f:F:D:V:R:' ) || USAGE();
 $opt_H && USAGE();
 
+if (! $ruledir  || ! -d $ruledir) {
+    print STDERR "Please provide a valid rules directory (--ruledir) ";
+    print STDERR ": ".$ruledir."\n" if defined $ruledir;
+    exit 1;
+}
+
+if (! $annotdir  || ! -d $annotdir) {
+    print STDERR "Please provide a valid annotation directory (--annotdir)";
+    print STDERR ": ". $annotdir."\n" if defined $annotdir;
+    exit 1;
+}
+
+if ($opt_a &&  $opt_a != "hg19" && $opt_a != "hg38") {
+    print STDERR "Please provide a valid assembly [hg19,hg38]: $opt_a\n";
+    exit 1;
+}
+
+my $workdingdir = getcwd;
+
+# default parameters:
 $opt_B = $opt_B ? $opt_B : 0.0001;
+
+$opt_a = "hg19" unless $opt_a;
+$annotdir = "$workdingdir/NGS/genomes/$opt_a/Annotation" unless $annotdir;
+$filter_common_snp = "$annotdir/filter_common_snp.txt" unless $filter_common_snp;
+$snpeffect_export_polymorphic = "$annotdir/snpeffect_export_Polymorphic.txt" unless $snpeffect_export_polymorphic;
+$filter_common_artifacts = "$annotdir/filter_common_artifacts.txt" unless $filter_common_artifacts;
+$actionable_hotspot = "$annotdir/actionable_hotspot.txt" unless $actionable_hotspot;
+$actionable = "$annotdir/actionable.txt" unless $actionable;
+$compendia_ms7_hotspot = "$annotdir/Compendia.MS7.Hotspot.txt" unless $compendia_ms7_hotspot;
+$splice = "$annotdir/SPLICE.txt" unless $splice;
+$lastaa = "$annotdir/last_critical_aa.txt" unless $lastaa;
+$blackgenes = "$annotdir/blackgenes.txt" unless $blackgenes;
 
 my $platform = $opt_p if ( $opt_p );
 my $tp53group1 = parseMut_tp53( "$ruledir/DNE.txt" );
@@ -89,8 +102,8 @@ my $tp53group2 = parseMut_tp53( "$ruledir/TA0-25.txt" );
 my $tp53group3 = parseMut_tp53( "$ruledir/TA25-50_SOM_10x.txt" );
 my %tp53critical_aa_pos;
 my %splice = ();
-if ( -e $SPLICE ) {
-    open(SP, $SPLICE);
+if ( -e $splice ) {
+    open(SP, $splice);
     while( <SP> ) {
         chomp;
         next if ( /^##/ );
@@ -99,12 +112,12 @@ if ( -e $SPLICE ) {
     }
     close( SP );
 } else {
-    print STDERR "Warning: No splice junction file '$SPLICE' supplied\nProceed...\n";
+    print STDERR "Warning: No splice junction file '$splice' supplied\nProceed...\n";
 }
 
 my %lastaa = ();
-if ( -e $LASTAA ) {
-    open(AA, $LASTAA);
+if ( -e $lastaa ) {
+    open(AA, $lastaa);
     while( <AA> ) {
         chomp;
         next if ( /^##/ );
@@ -113,7 +126,7 @@ if ( -e $LASTAA ) {
     }
     close( AA );
 } else {
-    print STDERR "Warning: No last known significant amino acid file '$LASTAA' supplied.\nProceed...\n";
+    print STDERR "Warning: No last known significant amino acid file '$lastaa' supplied.\nProceed...\n";
 }
 
 my %blackgenes = ();
@@ -898,11 +911,11 @@ sub USAGE {
     -p  string
         The platform, such as WXS, WGS, RNA-Seq, VALIDATION, etc.  No Default.  Used when output is in FM's format (-M option)
 
-    -a  dirpath
-        Directory path for containing annotation files.
-        Default is /projects/ngs/azbifx/NGS/genomes/hg19/Annotation
-        For hg38, use /projects/ngs/azbifx/NGS/genomes/hg38/Annotation
-        If dirpath is "hg38", automatically set it to /projects/ngs/azbifx/NGS/genomes/hg38/Annotation
+    -a  assembly
+        Expected hg19 or hg38, to be used to specify the specific annotation data to be used.
+        Default hg19.
+        For hg38, use specific hg38 annotation for example /<work_directory>/NGS/genomes/hg38/Annotation
+        If assembly is "hg38", annotdir is automatically set to /<work_directory>/NGS/genomes/hg38/Annotation
 
     -O  Indicate to keep IO genes.  Currently defined as "HLA-*".  By default, all HLA-* genes will be filtered out.
 
@@ -920,34 +933,37 @@ sub USAGE {
         Default: Off
 
     --ruledir  dirpath
-        default is /projects/ngs/azbifx/NGS/Rules
+        required, for example .../NGS/Rules
 
     --annotdir  dirpath
-        default is /projects/ngs/azbifx/NGS/genomes/hg19/Annotation
+        required, for example .../NGS/genomes/hg19/Annotation
 
     --filter_common_snp  filepath
-        default is /projects/ngs/azbifx/NGS/genomes/hg19/Annotation/filter_common_snp.txt
+        default is /<annotdir>/filter_common_snp.txt
 
     --snpeffect_export_polymorphic  filepath
-        default is /projects/ngs/azbifx/NGS/genomes/hg19/Annotation/snpeffect_export_Polymorphic.txt
+        default is /<annotdir>/snpeffect_export_Polymorphic.txt
 
     --filter_common_artifacts  filepath
-        default is /projects/ngs/azbifx/NGS/genomes/hg19/Annotation/filter_common_artifacts.txt
+        default is /<annotdir>/filter_common_artifacts.txt
 
     --actionable_hotspot  filepath
-        default is /projects/ngs/azbifx/NGS/genomes/hg19/Annotation/actionable_hotspot.txt
+        default is /<annotdir>/actionable_hotspot.txt
 
     --actionable  filepath
-        default is /projects/ngs/azbifx/NGS/genomes/hg19/Annotation/actionable.txt
+        default is /<annotdir>/actionable.txt
 
     --compendia_ms7_hotspot  filepath
-        default is /projects/ngs/azbifx/NGS/genomes/hg19/Annotation/Compendia.MS7.Hotspot.txt
+        default is /<annotdir>/Compendia.MS7.Hotspot.txt
+
+    --splice  filepath
+        default is /<annotdir>/SPLICE.txt
 
     --lastaa  filepath
-        default is /projects/ngs/azbifx/NGS/genomes/hg19/Annotation/last_critical_aa.txt
+        default is /<annotdir>/last_critical_aa.txt
 
     --blackgenes  filepath
-        default is /projects/ngs/azbifx/NGS/genomes/hg19/Annotation/blackgenes.txt
+        default is /<annotdir>/blackgenes.txt
 
 USAGE
     exit(0);
