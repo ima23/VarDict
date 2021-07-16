@@ -147,7 +147,7 @@ if ( -e $blackgenes ) {
 my $MINAF = $opt_f ? $opt_f : 0.05;
 my $MAXRATE = $opt_R ? $opt_R : 1.00; 
 my $MINCOMSAMPLE = $opt_s ? $opt_s : 5; # the minimum number of samples sharing the same variant
-my $ACTMINAF = $opt_F ? $opt_F : ($MINAF/2 < 0.01 ? $MINAF/2 : 0.01);
+my $ACTMINAF = $opt_F ? $opt_F : ($MINAF/2 < 0.05 ? $MINAF/2 : 0.05);
 my %filter_snp;
 if ( -e $filter_common_snp ) {
     open( FSNP, $filter_common_snp );
@@ -542,7 +542,7 @@ while( <> ) {
         $status = "known"; 
         next if ( $af < $ACTMINAF );
         #next if ( $af < 0.025 && $gene eq "TP53" ); # As TP53 is early event, it should be a little more stringent
-        next if ( $af < 0.15 && $act eq "germline" );
+        next if ( $af < 0.002 && $act eq "germline" );
     } else {
         #next if ( $type =~ /^INTRON/i || $type =~ /^SYNONYMOUS_/i || $fclass eq "SILENT" || ($type =~ /splice_region_variant/ && $a[10] eq "") );
         if ( $type =~ /^SYNONYMOUS_/i || $fclass eq "SILENT" ) {
